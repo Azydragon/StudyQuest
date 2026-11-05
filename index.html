@@ -301,6 +301,7 @@ code { background: var(--bg); padding: 2px 8px; border-radius: 6px; font-size: 0
   <button data-t="timer" class="on">⏱️ Timer</button>
   <button data-t="table">📅 Timetable</button>
   <button data-t="tasks">✅ Tasks &amp; Rewards</button>
+  <button data-t="pdf">📄 PDF Viewer</button>
 </nav>
 
 <main id="main">
@@ -399,6 +400,47 @@ code { background: var(--bg); padding: 2px 8px; border-radius: 6px; font-size: 0
       <button class="b" id="radd">Add Reward</button>
     </div>
     <div id="rlist"></div>
+  </div>
+</section>
+
+<!-- Dedicated PDF & Document Reader Section -->
+<section id="pdf">
+  <div class="card">
+    <h2>📄 Document &amp; PDF Reader</h2>
+    <p style="margin: 0 0 14px; font-size: 0.9rem; color: var(--mute);">
+      Open local PDFs or embed study materials without leaving your workspace or switching browser tabs.
+    </p>
+
+    <div class="row" style="gap:12px;">
+      <label class="b alt" style="cursor:pointer; display:inline-flex; align-items:center;">
+        📁 Upload Local PDF
+        <input type="file" id="pdfFileInput" accept="application/pdf" style="display:none;">
+      </label>
+      <span style="color:var(--mute); font-size:0.85rem;">or</span>
+      <input id="pdfUrlInput" placeholder="Paste PDF or website link..." style="flex:1; min-width:200px;">
+      <button class="b" id="pdfLoadUrl">Load Link</button>
+    </div>
+  </div>
+
+  <div class="card" id="pdfContainerCard" style="padding: 16px;">
+    <!-- PDF Toolbar -->
+    <div class="row" style="justify-content:space-between; margin-top:0; margin-bottom:12px; padding-bottom:10px; border-bottom:1px solid var(--line);">
+      <div style="display:flex; align-items:center; gap:8px; overflow:hidden;">
+        <span id="pdfDocStatus" style="font-weight:700; font-size:0.9rem; truncate;">No document loaded</span>
+      </div>
+      <div class="row" style="margin:0; gap:8px;">
+        <button class="b alt" id="pdfFullscreenBtn" title="Toggle Fullscreen View">⛶ Full Screen</button>
+        <button class="ico" id="pdfClearBtn" title="Clear document">Clear</button>
+      </div>
+    </div>
+
+    <!-- Embedded PDF Viewer Frame -->
+    <div id="pdfViewerFrameContainer" style="width:100%; height:75vh; border-radius:14px; overflow:hidden; background:var(--bg); border:1px solid var(--line); position:relative;">
+      <div id="pdfEmptyPlaceholder" class="empty" style="position:absolute; top:50%; left:50%; transform:translate(-50%, -50%);">
+        Upload a PDF file or paste a document URL above to begin reading.
+      </div>
+      <iframe id="pdfFrame" style="width:100%; height:100%; border:none; display:none;" title="PDF Document Viewer"></iframe>
+    </div>
   </div>
 </section>
 
@@ -816,6 +858,91 @@ $('#rlist').onclick = e => {
   if (x) { rewards = rewards.filter(a => a.id !== x); store.set('rewards', rewards); drawTasks(); }
 };
 drawTasks();
+
+/* ---------- PDF & Document Viewer Manager ---------- */
+let activeBlobUrl = null;
+
+function loadPdfSource(src, title) {
+  const frame = $('#pdfFrame');
+  const placeholder = $('#pdfEmptyPlaceholder');
+  const status = $('#pdfDocStatus');
+
+  if (activeBlobUrl && src !== activeBlobUrl) {
+    URL.revokeObjectURL(activeBlobUrl);
+    activeBlobUrl = null;
+  }
+
+  frame.src = src;
+  frame.style.display = 'block';
+  placeholder.style.display = 'none';
+  status.textContent = '📄 ' + (title || 'Document Loaded');
+  store.set('lastPdfUrl', src.startsWith('blob:') ? '' : src);
+}
+
+function clearPdfSource() {
+  const frame = $('#pdfFrame');
+  const placeholder = $('#pdfEmptyPlaceholder');
+  const status = $('#pdfDocStatus');
+
+  if (activeBlobUrl) {
+    URL.revokeObjectURL(activeBlobUrl);
+    activeBlobUrl = null;
+  }
+  frame.src = 'about:blank';
+  frame.style.display = 'none';
+  placeholder.style.display = 'block';
+  status.textContent = 'No document loaded';
+  $('#pdfFileInput').value = '';
+  $('#pdfUrlInput').value = '';
+  store.set('lastPdfUrl', '');
+}
+
+// Local File Upload Handler
+$('#pdfFileInput').onchange = e => {
+  const file = e.target.files[0];
+  if (!file) return;
+  if (file.type !== 'application/pdf') {
+    return alert('Please select a valid PDF file.');
+  }
+  activeBlobUrl = URL.createObjectURL(file);
+  loadPdfSource(activeBlobUrl, file.name);
+};
+
+// URL Load Handler
+$('#pdfLoadUrl').onclick = () => {
+  const url = $('#pdfUrlInput').value.trim();
+  if (!url) return $('#pdfUrlInput').focus();
+  loadPdfSource(url, url.split('/').pop() || 'Web Document');
+};
+
+$('#pdfUrlInput').onkeydown = e => {
+  if (e.key === 'Enter') $('#pdfLoadUrl').click();
+};
+
+$('#pdfClearBtn').onclick = clearPdfSource;
+
+// Fullscreen Toggle Handler
+$('#pdfFullscreenBtn').onclick = () => {
+  const container = $('#pdfViewerFrameContainer');
+  if (!document.fullscreenElement) {
+    if (container.requestFullscreen) {
+      container.requestFullscreen();
+    } else if (container.webkitRequestFullscreen) {
+      container.webkitRequestFullscreen();
+    }
+  } else {
+    if (document.exitFullscreen) {
+      document.exitFullscreen();
+    }
+  }
+};
+
+// Restore previous PDF link if available
+const savedPdf = store.get('lastPdfUrl', '');
+if (savedPdf) {
+  $('#pdfUrlInput').value = savedPdf;
+  loadPdfSource(savedPdf, savedPdf.split('/').pop());
+}
 
 /* ---------- Spotify PKCE Integration ---------- */
 const REDIRECT = location.origin + location.pathname;
