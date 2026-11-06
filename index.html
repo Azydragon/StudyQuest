@@ -7,6 +7,8 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600&family=Nunito:wght@400;600;700&display=swap" rel="stylesheet">
+<!-- Include PDF.js Library for rendering local PDFs without browser object errors -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.min.js"></script>
 <style>
 :root{
   --bg:#f4effa;--bg2:#e9f6f1;--card:#ffffff;--ink:#2d2a4a;--mute:#7a7796;
@@ -69,9 +71,11 @@ label.s{color:var(--mute);font-size:.9rem}
 .add-tab-btn{border:none;background:var(--card);color:var(--ink);padding:6px 12px;border-radius:8px;cursor:pointer;font-weight:700}
 
 .pdf-toolbar{display:flex;gap:10px;align-items:center;padding:10px 14px;background:var(--card);border-bottom:1px solid var(--line);flex-wrap:wrap}
-.pdf-body{flex:1;position:relative;background:#1e1e1e;overflow:hidden}
-.pdf-frame{width:100%;height:100%;border:none;display:none}
+.pdf-body{flex:1;position:relative;background:var(--card);overflow:hidden;display:flex;flex-direction:column}
+.pdf-frame{width:100%;height:100%;border:none;display:none;background:var(--card);overflow:auto}
 .pdf-frame.active{display:block}
+.pdf-canvas-container{display:flex;flex-direction:column;align-items:center;padding:16px;gap:12px;overflow-y:auto;height:100%;background:#525659}
+.pdf-page-canvas{box-shadow:0 4px 12px rgba(0,0,0,0.3);max-width:100%;border-radius:4px;background:#fff}
 .pdf-placeholder{display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;color:var(--mute);text-align:center;padding:20px;background:var(--card)}
 
 .icon-btn{display:inline-flex;align-items:center;justify-content:center;width:40px;height:40px;padding:0;border-radius:12px;cursor:pointer;background:transparent;color:var(--ink);border:1.5px solid var(--line)}
@@ -173,15 +177,16 @@ small{color:var(--mute)}
       <span style="color:var(--mute);font-size:0.9rem">or</span>
       <input id="pdfUrlInput" placeholder="Paste PDF or website URL..." style="flex:1;min-width:180px">
       <button class="b alt" id="loadPdfUrlBtn">Load Link</button>
+      <button class="b alt" id="openExternalBtn" title="Open active doc in new browser window" style="display:none">↗️ Open Direct</button>
       <button class="icon-btn" id="fullScreenPdfBtn" title="Toggle Fullscreen" aria-label="Toggle Fullscreen">
         <svg id="fsExpandIcon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"/></svg>
-        <svg id="fsCompressIcon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:none"><path d="M8 3v3a2 2 0 0 1-2 2H3m18 0h-3a2 2 0 0 1-2-2V3m0 18v-3a2 2 0 0 1 2-2h3M3 16h3a2 2 0 0 1 2 2v3"/></svg>
+        <svg id="fsCompressIcon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:none"><path d="M8 3v3a2 2 0 0 1-2 2H3m18 0h-3a2 2 0 0 1 2-2V3m0 18v-3a2 2 0 0 1 2-2h3M3 16h3a2 2 0 0 1 2 2v3"/></svg>
       </button>
     </div>
     <div class="pdf-body" id="pdfBody">
       <div class="pdf-placeholder" id="pdfPlaceholder">
         <h3>No Document Selected</h3>
-        <p>Click "Open PDF File" or paste a URL above to open a document in this tab.</p>
+        <p>Click "Open PDF File" to select a PDF from your device or paste a URL above.</p>
       </div>
     </div>
   </div>
@@ -266,8 +271,13 @@ small{color:var(--mute)}
 </div>
 
 <script>
-/* Helper selectors initialized at top */
+/* Global selector helpers */
 const $=s=>document.querySelector(s), $$=s=>[...document.querySelectorAll(s)];
+
+// Configure PDF.js worker URL
+if(window.pdfjsLib){
+  pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.worker.min.js';
+}
 
 const store={
   get(k,d){try{const v=localStorage.getItem('sd_'+k);return v?JSON.parse(v):d}catch(e){return d}},
@@ -287,12 +297,14 @@ $('#themeToggle').onclick=()=>{
 };
 setTheme(store.get('theme','light'));
 
-/* Tabs Navigation */
-$('#nav').onclick=e=>{const t=e.target.dataset.t;if(!t)return;
+/* Main Nav Navigation */
+$('#nav').onclick=e=>{
+  const t=e.target.dataset.t;if(!t)return;
   $$('nav button').forEach(b=>b.classList.toggle('on',b.dataset.t===t));
-  $$('section').forEach(s=>s.classList.toggle('on',s.id===t))};
+  $$('section').forEach(s=>s.classList.toggle('on',s.id===t));
+};
 
-/* Music Hide */
+/* Music Panel Hide/Show */
 function setHidden(h){
   document.body.classList.toggle('hide-music',h);
   $('#main').classList.toggle('solo',h);
@@ -302,7 +314,7 @@ function setHidden(h){
 $('#mtoggle').onclick=()=>setHidden(!document.body.classList.contains('hide-music'));
 setHidden(store.get('hideMusic',false));
 
-/* Timer */
+/* ---------- Timer & Mini Window ---------- */
 let mode='focus',total=1500,left=1500,running=false,endAt=0,tick=null,sessions=store.get('sessions',0);
 const secs=(h,m)=>Math.max(0,(+$(h).value||0)*3600+(+$(m).value||0)*60);
 const fmt=s=>{const h=Math.floor(s/3600),m=Math.floor(s%3600/60),x=s%60,p=n=>String(n).padStart(2,'0');return (h?h+':':'')+p(m)+':'+p(x)};
@@ -350,22 +362,62 @@ $('#pipBtn').onclick=async()=>{
       return;
     }catch(e){}
   }
-  alert('Timer status is pinned in the browser tab title!');
+  alert('Mini Window active: Timer is tracking live in the tab title bar!');
 };
 
-/* Multi-Tab PDF Viewer */
+/* ---------- Multi-Tab PDF & Web Document Viewer ---------- */
 let pdfTabs=[], activeTabId=null;
 
-function createTab(title='Untitled Doc', src=''){
-  const id=Date.now()+Math.random();
-  const tab={id, title, src};
+async function renderPdfFileToTab(fileArrayBuffer, containerEl){
+  containerEl.innerHTML = '<div class="pdf-canvas-container" id="canvasContainer"><p style="color:#fff">Loading PDF pages...</p></div>';
+  const canvasContainer = containerEl.querySelector('#canvasContainer');
+  
+  try {
+    const pdf = await pdfjsLib.getDocument({data: fileArrayBuffer}).promise;
+    canvasContainer.innerHTML = ''; // clear loading text
+    
+    for(let pageNum = 1; pageNum <= pdf.numPages; pageNum++){
+      const page = await pdf.getPage(pageNum);
+      const viewport = page.getViewport({scale: 1.3});
+      
+      const canvas = document.createElement('canvas');
+      canvas.className = 'pdf-page-canvas';
+      const context = canvas.getContext('2d');
+      canvas.height = viewport.height;
+      canvas.width = viewport.width;
+      
+      const renderContext = {
+        canvasContext: context,
+        viewport: viewport
+      };
+      
+      canvasContainer.appendChild(canvas);
+      page.render(renderContext);
+    }
+  } catch(err) {
+    canvasContainer.innerHTML = `<div style="color:#fff;text-align:center;padding:20px">
+      <p>⚠️ Unable to parse PDF document directly.</p>
+      <small>${esc(err.message)}</small>
+    </div>`;
+  }
+}
+
+function createTab(title='Untitled Doc', src='', isArrayBuffer=false, rawData=null){
+  const id='tab_'+Date.now()+'_'+Math.floor(Math.random()*1000);
+  const tab={id, title, src, isArrayBuffer, rawData};
   pdfTabs.push(tab);
   
-  const iframe=document.createElement('iframe');
-  iframe.className='pdf-frame';
-  iframe.id='frame_'+id;
-  if(src) iframe.src=src;
-  $('#pdfBody').appendChild(iframe);
+  const frameContainer=document.createElement('div');
+  frameContainer.className='pdf-frame';
+  frameContainer.id='frame_'+id;
+  
+  $('#pdfBody').appendChild(frameContainer);
+  
+  if(isArrayBuffer && rawData && window.pdfjsLib){
+    renderPdfFileToTab(rawData, frameContainer);
+  } else if(src) {
+    frameContainer.innerHTML=`<iframe src="${esc(src)}" style="width:100%;height:100%;border:none;"></iframe>`;
+  }
   
   switchTab(id);
   renderTabs();
@@ -376,10 +428,19 @@ function switchTab(id){
   $$('.pdf-frame').forEach(f=>f.classList.toggle('active', f.id==='frame_'+id));
   const activeTab=pdfTabs.find(t=>t.id===id);
   const placeholder=$('#pdfPlaceholder');
-  if(activeTab && activeTab.src){
+  const openExt=$('#openExternalBtn');
+  
+  if(activeTab && (activeTab.src || activeTab.isArrayBuffer)){
     placeholder.style.display='none';
+    if(openExt && activeTab.src && !activeTab.isArrayBuffer){
+      openExt.style.display='inline-block';
+      openExt.onclick=()=>window.open(activeTab.src, '_blank');
+    } else if(openExt) {
+      openExt.style.display='none';
+    }
   }else{
     placeholder.style.display='flex';
+    if(openExt) openExt.style.display='none';
   }
   renderTabs();
 }
@@ -387,8 +448,8 @@ function switchTab(id){
 function closeTab(id, e){
   if(e) e.stopPropagation();
   pdfTabs=pdfTabs.filter(t=>t.id!==id);
-  const iframe=$('#frame_'+id);
-  if(iframe) iframe.remove();
+  const el=$('#frame_'+id);
+  if(el) el.remove();
   
   if(activeTabId===id){
     if(pdfTabs.length>0){
@@ -396,6 +457,7 @@ function closeTab(id, e){
     }else{
       activeTabId=null;
       $('#pdfPlaceholder').style.display='flex';
+      if($('#openExternalBtn')) $('#openExternalBtn').style.display='none';
       renderTabs();
     }
   }else{
@@ -423,61 +485,81 @@ $('#uploadPdfBtn').onclick=()=>$('#pdfFileInput').click();
 $('#pdfFileInput').onchange=e=>{
   const file=e.target.files[0];
   if(!file)return;
-  const url=URL.createObjectURL(file);
-  if(!activeTabId){
-    createTab(file.name, url);
-  }else{
-    const tab=pdfTabs.find(t=>t.id===activeTabId);
-    tab.title=file.name;
-    tab.src=url;
-    const iframe=$('#frame_'+activeTabId);
-    if(iframe) iframe.src=url;
-    switchTab(activeTabId);
-  }
+  
+  const reader = new FileReader();
+  reader.onload = function(evt) {
+    const arrayBuffer = evt.target.result;
+    if(!activeTabId){
+      createTab(file.name, '', true, arrayBuffer);
+    }else{
+      const tab=pdfTabs.find(t=>t.id===activeTabId);
+      tab.title=file.name;
+      tab.src='';
+      tab.isArrayBuffer=true;
+      tab.rawData=arrayBuffer;
+      const el=$('#frame_'+activeTabId);
+      if(el){
+        renderPdfFileToTab(arrayBuffer, el);
+      }
+      switchTab(activeTabId);
+    }
+  };
+  reader.readAsArrayBuffer(file);
 };
 
 $('#loadPdfUrlBtn').onclick=()=>{
-  const url=$('#pdfUrlInput').value.trim();
+  let url=$('#pdfUrlInput').value.trim();
   if(!url)return;
+  if(!/^https?:\/\//i.test(url)) url='https://'+url;
+  
   if(!activeTabId){
-    createTab('Web Document', url);
+    createTab('Web Doc', url);
   }else{
     const tab=pdfTabs.find(t=>t.id===activeTabId);
-    tab.title='Web Document';
+    tab.title='Web Doc';
     tab.src=url;
-    const iframe=$('#frame_'+activeTabId);
-    if(iframe) iframe.src=url;
+    tab.isArrayBuffer=false;
+    tab.rawData=null;
+    const el=$('#frame_'+activeTabId);
+    if(el){
+      el.innerHTML=`<iframe src="${esc(url)}" style="width:100%;height:100%;border:none;"></iframe>`;
+    }
     switchTab(activeTabId);
   }
 };
 
-/* Fullscreen Toggle with Icon Switching */
-function updateFsIcons(isFs){
-  $('#fsExpandIcon').style.display=isFs?'none':'block';
-  $('#fsCompressIcon').style.display=isFs?'block':'none';
-}
-
+/* Fullscreen Toggle */
 $('#fullScreenPdfBtn').onclick=()=>{
   const c=$('#pdfContainer');
-  if(!document.fullscreenElement){
-    c.requestFullscreen().then(()=>updateFsIcons(true)).catch(()=>{
-      c.classList.toggle('fullscreen');
-      updateFsIcons(c.classList.contains('fullscreen'));
-    });
+  const isFS=!!document.fullscreenElement;
+  if(!isFS){
+    if(c.requestFullscreen){
+      c.requestFullscreen().catch(()=>c.classList.add('fullscreen'));
+    }else{
+      c.classList.add('fullscreen');
+    }
+    $('#fsExpandIcon').style.display='none';
+    $('#fsCompressIcon').style.display='inline';
   }else{
-    document.exitFullscreen().then(()=>updateFsIcons(false));
+    if(document.exitFullscreen){
+      document.exitFullscreen();
+    }
+    c.classList.remove('fullscreen');
+    $('#fsExpandIcon').style.display='inline';
+    $('#fsCompressIcon').style.display='none';
   }
 };
 
 document.addEventListener('fullscreenchange', ()=>{
-  if(!document.fullscreenElement){
-    updateFsIcons(false);
-  }
+  const isFS=!!document.fullscreenElement;
+  $('#fsExpandIcon').style.display=isFS?'none':'inline';
+  $('#fsCompressIcon').style.display=isFS?'inline':'none';
+  if(!isFS) $('#pdfContainer').classList.remove('fullscreen');
 });
 
 createTab('Doc 1', '');
 
-/* Timetable & Floating School Grid */
+/* ---------- School Timetable & Schedule ---------- */
 const DAYS=['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
 let blocks=store.get('blocks',[]),day=DAYS[(new Date().getDay()+6)%7],editId=null;
 $('#bd').innerHTML=DAYS.map(d=>`<option>${d}</option>`).join('');
@@ -489,49 +571,65 @@ function drawTable(){
     <time>${b.start}–${b.end}</time><span style="flex:1;overflow-wrap:anywhere">${esc(b.title)}</span>
     <button class="ico" data-e="${b.id}">Edit</button><button class="ico" data-x="${b.id}">Delete</button></div>`).join('')
     :'<div class="empty">Nothing planned for '+day+'. Add a block below.</div>';
+  renderModalGrid();
 }
 
 function renderModalGrid(){
-  const hours=['08:00','09:00','10:00','11:00','12:00','13:00','14:00','15:00','16:00','17:00'];
+  const grid=$('#modalTtGrid');
+  if(!grid)return;
   let html=`<div class="tt-header">Time</div>`+DAYS.map(d=>`<div class="tt-header">${d}</div>`).join('');
+  const times=['08:00','09:00','10:00','11:00','12:00','13:00','14:00','15:00','16:00','17:00'];
   
-  hours.forEach(h=>{
-    html+=`<div class="tt-time">${h}</div>`;
+  times.forEach(t=>{
+    html+=`<div class="tt-time">${t}</div>`;
     DAYS.forEach(d=>{
-      const matched=blocks.filter(b=>b.day===d && b.start.startsWith(h.substring(0,2)));
-      html+=`<div class="tt-cell">`+matched.map(m=>`<div class="tt-slot" style="--c:${esc(m.color)}">${esc(m.title)}</div>`).join('')+`</div>`;
+      const match=blocks.find(b=>b.day===d && b.start<=t && b.end>t);
+      html+=`<div class="tt-cell">${match?`<div class="tt-slot" style="--c:${esc(match.color)}">${esc(match.title)}</div>`:''}</div>`;
     });
   });
-  $('#modalTtGrid').innerHTML=html;
+  grid.innerHTML=html;
 }
 
-$('#openTimetableBtn').onclick=()=>{
-  renderModalGrid();
-  $('#timetableModal').classList.add('open');
-};
+$('#openTimetableBtn').onclick=()=>{renderModalGrid();$('#timetableModal').classList.add('open')};
 $('#closeModalBtn').onclick=()=>$('#timetableModal').classList.remove('open');
 $('#timetableModal').onclick=e=>{if(e.target===$('#timetableModal'))$('#timetableModal').classList.remove('open')};
 
 $('#days').onclick=e=>{if(e.target.dataset.d){day=e.target.dataset.d;$('#bd').value=day;drawTable()}};
 $('#bsave').onclick=()=>{
   const title=$('#bt').value.trim(),start=$('#bs').value,end=$('#be').value;
-  if(!title||!start||!end||end<=start)return alert('End time must be after the start time.');
+  if(!title||!start||!end||end<=start)return alert('End time must be after start time.');
   const o={title,start,end,day:$('#bd').value,color:$('#bc').value};
   if(editId){blocks=blocks.map(b=>b.id===editId?{...b,...o}:b)}else{blocks.push({id:Date.now(),...o})}
   store.set('blocks',blocks);$('#bt').value='';drawTable();
 };
+$('#blocks').onclick=e=>{
+  const x=+e.target.dataset.x, ed=+e.target.dataset.e;
+  if(x){blocks=blocks.filter(b=>b.id!==x);store.set('blocks',blocks);drawTable()}
+  if(ed){
+    const b=blocks.find(b=>b.id===ed);
+    if(b){
+      editId=ed;$('#bt').value=b.title;$('#bs').value=b.start;$('#be').value=b.end;
+      $('#bd').value=b.day;$('#bc').value=b.color;
+      $$('nav button').find(btn=>btn.dataset.t==='table').click();
+    }
+  }
+};
 drawTable();
 
-/* Tasks & Rewards */
+/* ---------- Tasks & Rewards ---------- */
 let points=store.get('points',0);
 const showPts=()=>$('#pts').textContent=points+' pts';
-let tasks=store.get('tasks',[]),rewards=store.get('rewards',[{id:1,title:'30 min gaming',cost:40}]);
 
+let tasks=store.get('tasks',[]),rewards=store.get('rewards',[{id:1,title:'30 min gaming',cost:40}]);
 function drawTasks(){
   $('#tlist').innerHTML=tasks.length?tasks.map(t=>`<div class="item ${t.done?'done':''}">
     <input type="checkbox" data-c="${t.id}" ${t.done?'checked':''}>
     <span class="t">${esc(t.title)}</span><button class="ico" data-x="${t.id}">Delete</button></div>`).join('')
     :'<div class="empty">No tasks yet.</div>';
+  $('#rlist').innerHTML=rewards.length?rewards.map(r=>`<div class="item"><span class="t">${esc(r.title)}</span>
+    <b>${r.cost} pts</b><button class="b" data-r="${r.id}">Redeem</button>
+    <button class="ico" data-rx="${r.id}">Delete</button></div>`).join('')
+    :'<div class="empty">Add rewards to aim for!</div>';
   showPts();
 }
 $('#tadd').onclick=()=>{const v=$('#tt').value.trim();if(!v)return;
@@ -539,16 +637,28 @@ $('#tadd').onclick=()=>{const v=$('#tt').value.trim();if(!v)return;
 $('#tlist').onchange=e=>{const id=+e.target.dataset.c;if(!id)return;
   const t=tasks.find(t=>t.id===id);t.done=e.target.checked;points+=t.done?t.pts:-t.pts;if(points<0)points=0;
   store.set('tasks',tasks);store.set('points',points);drawTasks()};
+$('#tlist').onclick=e=>{const id=+e.target.dataset.x;if(!id)return;tasks=tasks.filter(t=>t.id!==id);store.set('tasks',tasks);drawTasks()};
+$('#radd').onclick=()=>{const v=$('#rt').value.trim(),c=+$('#rc').value;if(!v||c<1)return;
+  rewards.push({id:Date.now(),title:v,cost:c});$('#rt').value='';store.set('rewards',rewards);drawTasks()};
+$('#rlist').onclick=e=>{
+  const r=+e.target.dataset.r,x=+e.target.dataset.rx;
+  if(r){
+    const rw=rewards.find(a=>a.id===r);
+    if(points>=rw.cost){points-=rw.cost;store.set('points',points);drawTasks();alert('Enjoy: '+rw.title+'!')}
+    else{alert('Not enough points yet!')}
+  }
+  if(x){rewards=rewards.filter(a=>a.id!==x);store.set('rewards',rewards);drawTasks()}
+};
 drawTasks();
 
-/* Spotify Embed */
+/* ---------- Spotify Embed ---------- */
 function embed(url){
   const m=url.match(/open\.spotify\.com\/(?:intl-[a-z]+\/)?(playlist|album|track|artist|show)\/([A-Za-z0-9]+)/);
   if(!m)return false;
   $('#player').innerHTML=`<iframe title="Spotify player" src="https://open.spotify.com/embed/${m[1]}/${m[2]}" height="352" allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture"></iframe>`;
   store.set('spotify',url);return true;
 }
-$('#spgo').onclick=()=>{if(!embed($('#sp').value.trim()))alert('Invalid Spotify link.')};
+$('#spgo').onclick=()=>{if(!embed($('#sp').value.trim()))alert('Invalid Spotify URL.')};
 const saved=store.get('spotify','');if(saved){$('#sp').value=saved;embed(saved)}
 </script>
 </body>
