@@ -15,12 +15,58 @@
   --line:#e2dcf0;--accent:#8a79f2;--accent2:#ff9e85;--mint:#6fd3b0;
   --gold:#ffc65c;--bad:#e5677b;--shadow:0 8px 24px rgba(138,121,242,0.15);
   --radius:18px;
+  --magic-glow: 0 0 15px rgba(138, 121, 242, 0.4);
 }
 [data-theme="dark"]{
   --bg:#161426;--bg2:#17262a;--card:#211d38;--ink:#f0edff;--mute:#9691bd;
   --line:#312c52;--accent:#9c8dff;--accent2:#ff9e85;--mint:#6fd3b0;
   --gold:#ffc65c;--bad:#ff8097;--shadow:0 8px 24px rgba(0,0,0,0.4);
+  --magic-glow: 0 0 20px rgba(156, 141, 255, 0.5);
 }
+
+/* Magic Realm Theme Extensions */
+[data-magic="true"] {
+  --bg: #0f0c1b;
+  --card: rgba(28, 22, 48, 0.85);
+  --ink: #e6e1ff;
+  --line: #453775;
+  --accent: #a855f7;
+  --accent2: #ec4899;
+  --gold: #fbbf24;
+  --shadow: 0 8px 32px rgba(168, 85, 247, 0.3);
+}
+[data-magic="true"] body {
+  background: radial-gradient(circle at 50% 20%, #1e1338 0%, #090613 100%);
+  position: relative;
+}
+/* Floating Magic Sparks Effect */
+#magicCanvas {
+  position: fixed;
+  top: 0; left: 0; width: 100vw; height: 100vh;
+  pointer-events: none;
+  z-index: 0;
+  display: none;
+}
+[data-magic="true"] #magicCanvas { display: block; }
+header, nav, main, .modal-overlay { position: relative; z-index: 1; }
+
+.fantasy-badge {
+  font-size: 1.2rem;
+  margin-right: 4px;
+}
+
+.streak-badge {
+  background: linear-gradient(135deg, #ff7e5f, #feb47b);
+  color: #fff;
+  font-weight: 800;
+  padding: 6px 14px;
+  border-radius: 999px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  box-shadow: 0 4px 14px rgba(255, 126, 95, 0.4);
+}
+
 *{box-sizing:border-box}
 body{margin:0;min-height:100vh;color:var(--ink);font:16px/1.55 Nunito,system-ui,sans-serif;background:var(--bg);transition:background .3s,color .3s}
 h1,h2,.clock,.mode,.tab-title{font-family:Fredoka,sans-serif}
@@ -117,10 +163,14 @@ small{color:var(--mute)}
 <body>
 
 <header>
-  <h1>📚 Study Desk</h1>
+  <h1>🧙‍♂️ Study Desk <span class="fantasy-badge" id="dragonIcon" style="display:none">🐉</span></h1>
   <div class="hr">
-    <button class="b alt" id="openTimetableBtn">📅 School Timetable</button>
-    <button class="theme-toggle" id="themeToggle">🌙 Theme</button>
+    <div class="streak-badge" id="streakBadge" title="Daily Session Streak!">🔥 <span id="streakCount">0</span> Day Streak</div>
+    <select class="theme-toggle" id="themeSelect">
+      <option value="light">☀️ Light Theme</option>
+      <option value="dark">🌙 Dark Theme</option>
+      <option value="magic">✨ Magic Realm</option>
+    </select>
     <button class="b alt" id="mtoggle">Hide music</button>
     <div class="pts" id="pts">0 pts</div>
   </div>
@@ -129,6 +179,7 @@ small{color:var(--mute)}
 <nav id="nav">
   <button data-t="timer" class="on">⏱️ Timer</button>
   <button data-t="pdf">📄 Multi-Doc Reader</button>
+  <button data-t="modalTimetable">📅 School Timetable</button>
   <button data-t="table">📝 Add Schedule Block</button>
   <button data-t="tasks">✅ Tasks & Rewards</button>
 </nav>
@@ -136,32 +187,41 @@ small{color:var(--mute)}
 <main id="main">
 <div>
 
+<canvas id="magicCanvas"></canvas>
+
 <section id="timer" class="on">
-  <div class="card" style="text-align:center">
-    <span class="mode" id="mode">Focus</span>
+  <div class="card" style="text-align:center;position:relative">
+    <button class="icon-btn" id="openSettingsBtn" style="position:absolute;top:16px;right:16px;z-index:2" title="Timer & Goal Settings">⚙️</button>
+    <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px;padding-right:48px;flex-wrap:wrap">
+      <span class="mode" id="mode">Focus</span>
+      <span class="fantasy-badge" id="wizardIcon" style="display:none;font-size:0.9rem;background:rgba(168,85,247,0.15);color:var(--accent);padding:4px 12px;border-radius:999px;font-weight:700">🔮 Wizard Focus Active</span>
+    </div>
     <div class="clock" id="clock">25:00</div>
     <div class="bar"><i id="fill"></i></div>
+    
+    <!-- Daily Goal Progress Bar -->
+    <div style="margin: 14px 0 8px; text-align: left;">
+      <div style="display:flex;justify-content:space-between;font-size:0.85rem;font-weight:700;color:var(--mute)">
+        <span>🎯 Daily Goal Progress</span>
+        <span id="goalText">0m / 120m</span>
+      </div>
+      <div class="bar" style="height:8px;margin:6px 0"><i id="goalFill" style="background:linear-gradient(90deg, #3b82f6, #10b981)"></i></div>
+    </div>
+
     <div class="row" style="justify-content:center">
       <button class="b" id="start">Start</button>
       <button class="b alt" id="reset">Reset</button>
       <button class="b alt" id="skip" hidden>Skip break</button>
       <button class="b alt" id="pipBtn">📌 Mini Floating Clock</button>
     </div>
-    <small id="sess">Focus sessions done: 0</small>
+    <small id="sess">Focus sessions done today: 0</small>
   </div>
   <div class="card">
-    <h2>Set your times</h2>
-    <div class="row"><label class="s">Focus</label>
-      <input class="num" id="fh" type="number" min="0" value="0"> h
-      <input class="num" id="fm" type="number" min="0" value="25"> min</div>
-    <div class="row"><label class="s">Break</label>
-      <input class="num" id="bh" type="number" min="0" value="0"> h
-      <input class="num" id="bm" type="number" min="0" value="5"> min
-      <label><input type="checkbox" id="brk" checked> Add breaks</label></div>
+    <h2>Preset Quick Select</h2>
     <div class="row">
-      <button class="b alt" data-p="25,5">25 / 5</button>
-      <button class="b alt" data-p="50,10">50 / 10</button>
-      <button class="b alt" data-p="90,15">90 / 15</button>
+      <button class="b alt" data-p="25,5">25 / 5 min</button>
+      <button class="b alt" data-p="50,10">50 / 10 min</button>
+      <button class="b alt" data-p="90,15">90 / 15 min</button>
     </div>
   </div>
 </section>
@@ -243,7 +303,7 @@ small{color:var(--mute)}
 
 </div>
 
-<aside>
+<aside id="musicSidebar">
   <div class="card">
     <h2>Spotify Player</h2>
     <div id="auth"></div>
@@ -261,11 +321,50 @@ small{color:var(--mute)}
 <div class="modal-overlay" id="timetableModal">
   <div class="modal-card">
     <div class="modal-header">
-      <h2 style="margin:0">📅 School Weekly Timetable</h2>
+      <h2 style="margin:0">📅 School Timetable</h2>
       <button class="ico" id="closeModalBtn" style="font-size:1.2rem;line-height:1">✕</button>
     </div>
     <div class="modal-body">
       <div class="tt-grid" id="modalTtGrid"></div>
+    </div>
+  </div>
+</div>
+
+<!-- Floating Timer Settings & Goal Modal -->
+<div class="modal-overlay" id="settingsModal">
+  <div class="modal-card" style="max-width:500px">
+    <div class="modal-header">
+      <h2 style="margin:0">⚙️ Timer &amp; Daily Study Goal</h2>
+      <button class="ico" id="closeSettingsBtn" style="font-size:1.2rem;line-height:1">✕</button>
+    </div>
+    <div class="modal-body">
+      <h3>Focus Session Duration</h3>
+      <div class="row">
+        <label class="s">Focus Time:</label>
+        <input class="num" id="fh" type="number" min="0" value="0"> h
+        <input class="num" id="fm" type="number" min="1" value="25"> min
+      </div>
+      
+      <h3 style="margin-top:16px">Break Duration</h3>
+      <div class="row">
+        <label class="s">Break Time:</label>
+        <input class="num" id="bh" type="number" min="0" value="0"> h
+        <input class="num" id="bm" type="number" min="1" value="5"> min
+      </div>
+      <div class="row">
+        <label><input type="checkbox" id="brk" checked> Auto-start breaks after focus</label>
+      </div>
+
+      <h3 style="margin-top:16px">🎯 Daily Study Target</h3>
+      <div class="row">
+        <label class="s">Target Study Time:</label>
+        <input class="num" id="gh" type="number" min="0" value="2"> h
+        <input class="num" id="gm" type="number" min="0" value="0"> min
+      </div>
+
+      <div class="row" style="margin-top:20px;justify-content:flex-end">
+        <button class="b" id="saveSettingsBtn">Save &amp; Apply</button>
+      </div>
     </div>
   </div>
 </div>
@@ -286,38 +385,132 @@ const store={
 };
 const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 
-/* Theme Toggle */
-function setTheme(t){
-  document.documentElement.setAttribute('data-theme',t);
-  store.set('theme',t);
+/* Theme & Magic Mode Handling */
+function applyThemeMode(val){
+  if(val==='magic'){
+    document.documentElement.setAttribute('data-theme', 'dark');
+    document.documentElement.setAttribute('data-magic', 'true');
+    $('#dragonIcon').style.display = 'inline';
+    $('#wizardIcon').style.display = 'inline';
+  } else {
+    document.documentElement.setAttribute('data-theme', val);
+    document.documentElement.setAttribute('data-magic', 'false');
+    $('#dragonIcon').style.display = 'none';
+    $('#wizardIcon').style.display = 'none';
+  }
+  store.set('themeMode', val);
 }
-$('#themeToggle').onclick=()=>{
-  const curr=document.documentElement.getAttribute('data-theme')==='dark'?'light':'dark';
-  setTheme(curr);
-};
-setTheme(store.get('theme','light'));
 
-/* Main Nav Navigation */
+if($('#themeSelect')){
+  const savedMode = store.get('themeMode', 'light');
+  $('#themeSelect').value = savedMode;
+  applyThemeMode(savedMode);
+  $('#themeSelect').onchange = (e) => applyThemeMode(e.target.value);
+}
+
+/* Nav Tab Switching Logic */
 $('#nav').onclick=e=>{
-  const t=e.target.dataset.t;if(!t)return;
+  const t=e.target.dataset.t;
+  if(!t)return;
+  if(t==='modalTimetable'){
+    renderModalGrid();
+    $('#timetableModal')?.classList.add('open');
+    return;
+  }
   $$('nav button').forEach(b=>b.classList.toggle('on',b.dataset.t===t));
   $$('section').forEach(s=>s.classList.toggle('on',s.id===t));
 };
 
-/* Music Panel Hide/Show */
+/* Music Hide / Show Handler */
 function setHidden(h){
   document.body.classList.toggle('hide-music',h);
-  $('#main').classList.toggle('solo',h);
-  $('#mtoggle').textContent=h?'Show music':'Hide music';
+  $('#main')?.classList.toggle('solo',h);
+  if($('#mtoggle')){
+    $('#mtoggle').textContent=h?'Show music':'Hide music';
+  }
   store.set('hideMusic',h);
 }
-$('#mtoggle').onclick=()=>setHidden(!document.body.classList.contains('hide-music'));
+if($('#mtoggle')){
+  $('#mtoggle').onclick=()=>setHidden(!document.body.classList.contains('hide-music'));
+}
 setHidden(store.get('hideMusic',false));
 
-/* ---------- Timer & Mini Window ---------- */
-let mode='focus',total=1500,left=1500,running=false,endAt=0,tick=null,sessions=store.get('sessions',0);
+/* Magic Canvas Animation */
+(function initMagicCanvas(){
+  const canvas = $('#magicCanvas');
+  if(!canvas) return;
+  const ctx = canvas.getContext('2d');
+  let width = canvas.width = window.innerWidth;
+  let height = canvas.height = window.innerHeight;
+  window.onresize = () => { width = canvas.width = window.innerWidth; height = canvas.height = window.innerHeight; };
+  
+  const particles = Array.from({length: 45}, () => ({
+    x: Math.random() * width,
+    y: Math.random() * height,
+    size: Math.random() * 3 + 1,
+    speedY: -Math.random() * 0.8 - 0.2,
+    speedX: Math.random() * 0.4 - 0.2,
+    opacity: Math.random() * 0.7 + 0.3
+  }));
+
+  function animate(){
+    if(document.documentElement.getAttribute('data-magic')==='true'){
+      ctx.clearRect(0, 0, width, height);
+      particles.forEach(p => {
+        p.y += p.speedY;
+        p.x += p.speedX;
+        if(p.y < 0) p.y = height;
+        if(p.x < 0 || p.x > width) p.x = Math.random() * width;
+        
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+        ctx.fillStyle = `rgba(192, 132, 252, ${p.opacity})`;
+        ctx.shadowBlur = 10;
+        ctx.shadowColor = '#c084fc';
+        ctx.fill();
+      });
+    }
+    requestAnimationFrame(animate);
+  }
+  animate();
+})();
+
+/* ---------- Timer, Streak & Daily Goals ---------- */
+let mode='focus',total=1500,left=1500,running=false,endAt=0,tick=null;
+let sessions=store.get('sessions',0);
+let totalStudiedSecs=store.get('todayStudiedSecs',0);
+let dailyGoalSecs=store.get('dailyGoalSecs', 7200); // 2h default
+let streak=store.get('streak', 0);
+let lastStudyDate=store.get('lastStudyDate', '');
+
+// Check & update streak logic
+function checkStreak(){
+  const today = new Date().toISOString().slice(0, 10);
+  if(!lastStudyDate){
+    streak = 0;
+  } else {
+    const lastDate = new Date(lastStudyDate);
+    const currDate = new Date(today);
+    const diffDays = Math.round((currDate - lastDate) / (1000 * 60 * 60 * 24));
+    if(diffDays > 1){
+      streak = 0; // Streak reset if missed a day
+    }
+  }
+  $('#streakCount').textContent = streak;
+  store.set('streak', streak);
+}
+checkStreak();
+
 const secs=(h,m)=>Math.max(0,(+$(h).value||0)*3600+(+$(m).value||0)*60);
 const fmt=s=>{const h=Math.floor(s/3600),m=Math.floor(s%3600/60),x=s%60,p=n=>String(n).padStart(2,'0');return (h?h+':':'')+p(m)+':'+p(x)};
+
+function updateGoalProgress(){
+  const goalMins = Math.round(dailyGoalSecs / 60);
+  const doneMins = Math.floor(totalStudiedSecs / 60);
+  $('#goalText').textContent = `${doneMins}m / ${goalMins}m`;
+  const pct = Math.min(100, Math.round((totalStudiedSecs / dailyGoalSecs) * 100));
+  $('#goalFill').style.width = pct + '%';
+}
 
 function draw(){
   $('#clock').textContent=fmt(left);
@@ -326,25 +519,81 @@ function draw(){
   $('#mode').classList.toggle('break',mode==='break');
   $('#skip').hidden=mode!=='break';
   $('#start').textContent=running?'Pause':'Start';
-  $('#sess').textContent='Focus sessions done: '+sessions;
+  $('#sess').textContent='Focus sessions done today: '+sessions;
+  updateGoalProgress();
   document.title=(running?fmt(left)+' · ':'')+'Study Desk';
 }
+
 function load(m){mode=m;total=left=m==='focus'?secs('#fh','#fm'):secs('#bh','#bm');if(!total)total=left=60;draw()}
 function stop(){running=false;clearInterval(tick)}
-function begin(){running=true;endAt=Date.now()+left*1000;clearInterval(tick);tick=setInterval(()=>{
-  left=Math.max(0,Math.round((endAt-Date.now())/1000));draw();if(left<=0)finish()},250);draw()}
-function finish(){stop();if(mode==='focus'){sessions++;store.set('sessions',sessions);if($('#brk').checked){load('break');begin();return}load('focus')}else{load('focus')}}
+function begin(){
+  running=true;endAt=Date.now()+left*1000;clearInterval(tick);
+  tick=setInterval(()=>{
+    const now = Date.now();
+    left=Math.max(0,Math.round((endAt-now)/1000));
+    if(mode==='focus'){
+      totalStudiedSecs += 1;
+      store.set('todayStudiedSecs', totalStudiedSecs);
+    }
+    draw();
+    if(left<=0)finish();
+  },1000);
+  draw();
+}
 
-$('#start').onclick=()=>running?(stop(),draw()):begin();
-$('#reset').onclick=()=>{stop();load('focus')};
-$('#skip').onclick=()=>{stop();load('focus');begin()};
-['#fh','#fm','#bh','#bm'].forEach(i=>$(i).onchange=()=>{stop();load('focus')});
-$$('[data-p]').forEach(b=>b.onclick=()=>{const[f,k]=b.dataset.p.split(',').map(Number);
-  $('#fh').value=Math.floor(f/60);$('#fm').value=f%60;$('#bh').value=Math.floor(k/60);$('#bm').value=k%60;stop();load('focus')});
+function finish(){
+  stop();
+  if(mode==='focus'){
+    sessions++;
+    store.set('sessions',sessions);
+    
+    // Increment Streak if first completed session of the day
+    const today = new Date().toISOString().slice(0, 10);
+    if(lastStudyDate !== today){
+      streak += 1;
+      lastStudyDate = today;
+      store.set('streak', streak);
+      store.set('lastStudyDate', today);
+      $('#streakCount').textContent = streak;
+    }
+
+    if($('#brk').checked){load('break');begin();return}load('focus');
+  }else{
+    load('focus');
+  }
+}
+
+/* Modal Timer & Goal Settings Handlers */
+if($('#openSettingsBtn')) $('#openSettingsBtn').onclick=()=>{
+  if($('#gh')) $('#gh').value = Math.floor(dailyGoalSecs / 3600);
+  if($('#gm')) $('#gm').value = Math.floor((dailyGoalSecs % 3600) / 60);
+  if($('#settingsModal')) $('#settingsModal').classList.add('open');
+};
+if($('#closeSettingsBtn')) $('#closeSettingsBtn').onclick=()=>$('#settingsModal')?.classList.remove('open');
+if($('#saveSettingsBtn')) $('#saveSettingsBtn').onclick=()=>{
+  dailyGoalSecs = secs('#gh', '#gm') || 3600;
+  store.set('dailyGoalSecs', dailyGoalSecs);
+  stop();
+  load('focus');
+  $('#settingsModal')?.classList.remove('open');
+};
+
+if($('#start')) $('#start').onclick=()=>running?(stop(),draw()):begin();
+if($('#reset')) $('#reset').onclick=()=>{stop();load('focus')};
+if($('#skip')) $('#skip').onclick=()=>{stop();load('focus');begin()};
+
+$$('[data-p]').forEach(b=>b.onclick=()=>{
+  const[f,k]=b.dataset.p.split(',').map(Number);
+  if($('#fh')) $('#fh').value=Math.floor(f/60);
+  if($('#fm')) $('#fm').value=f%60;
+  if($('#bh')) $('#bh').value=Math.floor(k/60);
+  if($('#bm')) $('#bm').value=k%60;
+  stop();load('focus');
+});
 load('focus');
 
 /* PiP Window */
-$('#pipBtn').onclick=async()=>{
+if($('#pipBtn')) $('#pipBtn').onclick=async()=>{
   if('documentPictureInPicture' in window){
     try{
       const pipWin=await window.documentPictureInPicture.requestWindow({width:300,height:180});
@@ -411,7 +660,8 @@ function createTab(title='Untitled Doc', src='', isArrayBuffer=false, rawData=nu
   frameContainer.className='pdf-frame';
   frameContainer.id='frame_'+id;
   
-  $('#pdfBody').appendChild(frameContainer);
+  const pdfBody = $('#pdfBody');
+  if(pdfBody) pdfBody.appendChild(frameContainer);
   
   if(isArrayBuffer && rawData && window.pdfjsLib){
     renderPdfFileToTab(rawData, frameContainer);
@@ -431,7 +681,7 @@ function switchTab(id){
   const openExt=$('#openExternalBtn');
   
   if(activeTab && (activeTab.src || activeTab.isArrayBuffer)){
-    placeholder.style.display='none';
+    if(placeholder) placeholder.style.display='none';
     if(openExt && activeTab.src && !activeTab.isArrayBuffer){
       openExt.style.display='inline-block';
       openExt.onclick=()=>window.open(activeTab.src, '_blank');
@@ -439,7 +689,7 @@ function switchTab(id){
       openExt.style.display='none';
     }
   }else{
-    placeholder.style.display='flex';
+    if(placeholder) placeholder.style.display='flex';
     if(openExt) openExt.style.display='none';
   }
   renderTabs();
@@ -456,7 +706,8 @@ function closeTab(id, e){
       switchTab(pdfTabs[pdfTabs.length-1].id);
     }else{
       activeTabId=null;
-      $('#pdfPlaceholder').style.display='flex';
+      const placeholder=$('#pdfPlaceholder');
+      if(placeholder) placeholder.style.display='flex';
       if($('#openExternalBtn')) $('#openExternalBtn').style.display='none';
       renderTabs();
     }
@@ -467,22 +718,25 @@ function closeTab(id, e){
 
 function renderTabs(){
   const container=$('#pdfTabsBar');
+  if(!container) return;
   $$('.pdf-tab').forEach(t=>t.remove());
   
+  const addBtn = $('#addTabBtn');
   pdfTabs.forEach(tab=>{
     const div=document.createElement('div');
     div.className='pdf-tab'+(tab.id===activeTabId?' active':'');
     div.onclick=()=>switchTab(tab.id);
     div.innerHTML=`<span class="title">${esc(tab.title)}</span><button class="close-tab">×</button>`;
     div.querySelector('.close-tab').onclick=(e)=>closeTab(tab.id, e);
-    container.insertBefore(div, $('#addTabBtn'));
+    if(addBtn) container.insertBefore(div, addBtn);
+    else container.appendChild(div);
   });
 }
 
-$('#addTabBtn').onclick=()=>createTab('New Tab', '');
-$('#uploadPdfBtn').onclick=()=>$('#pdfFileInput').click();
+if($('#addTabBtn')) $('#addTabBtn').onclick=()=>createTab('New Tab', '');
+if($('#uploadPdfBtn')) $('#uploadPdfBtn').onclick=()=>$('#pdfFileInput')?.click();
 
-$('#pdfFileInput').onchange=e=>{
+if($('#pdfFileInput')) $('#pdfFileInput').onchange=e=>{
   const file=e.target.files[0];
   if(!file)return;
   
@@ -493,10 +747,12 @@ $('#pdfFileInput').onchange=e=>{
       createTab(file.name, '', true, arrayBuffer);
     }else{
       const tab=pdfTabs.find(t=>t.id===activeTabId);
-      tab.title=file.name;
-      tab.src='';
-      tab.isArrayBuffer=true;
-      tab.rawData=arrayBuffer;
+      if(tab){
+        tab.title=file.name;
+        tab.src='';
+        tab.isArrayBuffer=true;
+        tab.rawData=arrayBuffer;
+      }
       const el=$('#frame_'+activeTabId);
       if(el){
         renderPdfFileToTab(arrayBuffer, el);
@@ -507,8 +763,8 @@ $('#pdfFileInput').onchange=e=>{
   reader.readAsArrayBuffer(file);
 };
 
-$('#loadPdfUrlBtn').onclick=()=>{
-  let url=$('#pdfUrlInput').value.trim();
+if($('#loadPdfUrlBtn')) $('#loadPdfUrlBtn').onclick=()=>{
+  let url=$('#pdfUrlInput')?.value.trim();
   if(!url)return;
   if(!/^https?:\/\//i.test(url)) url='https://'+url;
   
@@ -516,10 +772,12 @@ $('#loadPdfUrlBtn').onclick=()=>{
     createTab('Web Doc', url);
   }else{
     const tab=pdfTabs.find(t=>t.id===activeTabId);
-    tab.title='Web Doc';
-    tab.src=url;
-    tab.isArrayBuffer=false;
-    tab.rawData=null;
+    if(tab){
+      tab.title='Web Doc';
+      tab.src=url;
+      tab.isArrayBuffer=false;
+      tab.rawData=null;
+    }
     const el=$('#frame_'+activeTabId);
     if(el){
       el.innerHTML=`<iframe src="${esc(url)}" style="width:100%;height:100%;border:none;"></iframe>`;
@@ -529,8 +787,9 @@ $('#loadPdfUrlBtn').onclick=()=>{
 };
 
 /* Fullscreen Toggle */
-$('#fullScreenPdfBtn').onclick=()=>{
+if($('#fullScreenPdfBtn')) $('#fullScreenPdfBtn').onclick=()=>{
   const c=$('#pdfContainer');
+  if(!c) return;
   const isFS=!!document.fullscreenElement;
   if(!isFS){
     if(c.requestFullscreen){
@@ -538,23 +797,23 @@ $('#fullScreenPdfBtn').onclick=()=>{
     }else{
       c.classList.add('fullscreen');
     }
-    $('#fsExpandIcon').style.display='none';
-    $('#fsCompressIcon').style.display='inline';
+    if($('#fsExpandIcon')) $('#fsExpandIcon').style.display='none';
+    if($('#fsCompressIcon')) $('#fsCompressIcon').style.display='inline';
   }else{
     if(document.exitFullscreen){
       document.exitFullscreen();
     }
     c.classList.remove('fullscreen');
-    $('#fsExpandIcon').style.display='inline';
-    $('#fsCompressIcon').style.display='none';
+    if($('#fsExpandIcon')) $('#fsExpandIcon').style.display='inline';
+    if($('#fsCompressIcon')) $('#fsCompressIcon').style.display='none';
   }
 };
 
 document.addEventListener('fullscreenchange', ()=>{
   const isFS=!!document.fullscreenElement;
-  $('#fsExpandIcon').style.display=isFS?'none':'inline';
-  $('#fsCompressIcon').style.display=isFS?'inline':'none';
-  if(!isFS) $('#pdfContainer').classList.remove('fullscreen');
+  if($('#fsExpandIcon')) $('#fsExpandIcon').style.display=isFS?'none':'inline';
+  if($('#fsCompressIcon')) $('#fsCompressIcon').style.display=isFS?'inline':'none';
+  if(!isFS && $('#pdfContainer')) $('#pdfContainer').classList.remove('fullscreen');
 });
 
 createTab('Doc 1', '');
@@ -562,12 +821,12 @@ createTab('Doc 1', '');
 /* ---------- School Timetable & Schedule ---------- */
 const DAYS=['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
 let blocks=store.get('blocks',[]),day=DAYS[(new Date().getDay()+6)%7],editId=null;
-$('#bd').innerHTML=DAYS.map(d=>`<option>${d}</option>`).join('');
+if($('#bd')) $('#bd').innerHTML=DAYS.map(d=>`<option>${d}</option>`).join('');
 
 function drawTable(){
-  $('#days').innerHTML=DAYS.map(d=>`<button class="${d===day?'on':''}" data-d="${d}">${d}</button>`).join('');
+  if($('#days')) $('#days').innerHTML=DAYS.map(d=>`<button class="${d===day?'on':''}" data-d="${d}">${d}</button>`).join('');
   const list=blocks.filter(b=>b.day===day).sort((a,b)=>a.start.localeCompare(b.start));
-  $('#blocks').innerHTML=list.length?list.map(b=>`<div class="blk" style="--c:${esc(b.color)}">
+  if($('#blocks')) $('#blocks').innerHTML=list.length?list.map(b=>`<div class="blk" style="--c:${esc(b.color)}">
     <time>${b.start}–${b.end}</time><span style="flex:1;overflow-wrap:anywhere">${esc(b.title)}</span>
     <button class="ico" data-e="${b.id}">Edit</button><button class="ico" data-x="${b.id}">Delete</button></div>`).join('')
     :'<div class="empty">Nothing planned for '+day+'. Add a block below.</div>';
@@ -590,27 +849,31 @@ function renderModalGrid(){
   grid.innerHTML=html;
 }
 
-$('#openTimetableBtn').onclick=()=>{renderModalGrid();$('#timetableModal').classList.add('open')};
-$('#closeModalBtn').onclick=()=>$('#timetableModal').classList.remove('open');
-$('#timetableModal').onclick=e=>{if(e.target===$('#timetableModal'))$('#timetableModal').classList.remove('open')};
+if($('#openTimetableBtn')) $('#openTimetableBtn').onclick=()=>{renderModalGrid();$('#timetableModal')?.classList.add('open')};
+if($('#closeModalBtn')) $('#closeModalBtn').onclick=()=>$('#timetableModal')?.classList.remove('open');
+if($('#timetableModal')) $('#timetableModal').onclick=e=>{if(e.target===$('#timetableModal'))$('#timetableModal').classList.remove('open')};
 
-$('#days').onclick=e=>{if(e.target.dataset.d){day=e.target.dataset.d;$('#bd').value=day;drawTable()}};
-$('#bsave').onclick=()=>{
-  const title=$('#bt').value.trim(),start=$('#bs').value,end=$('#be').value;
+if($('#days')) $('#days').onclick=e=>{if(e.target.dataset.d){day=e.target.dataset.d;if($('#bd')) $('#bd').value=day;drawTable()}};
+if($('#bsave')) $('#bsave').onclick=()=>{
+  const title=$('#bt')?.value.trim(),start=$('#bs')?.value,end=$('#be')?.value;
   if(!title||!start||!end||end<=start)return alert('End time must be after start time.');
   const o={title,start,end,day:$('#bd').value,color:$('#bc').value};
   if(editId){blocks=blocks.map(b=>b.id===editId?{...b,...o}:b)}else{blocks.push({id:Date.now(),...o})}
-  store.set('blocks',blocks);$('#bt').value='';drawTable();
+  store.set('blocks',blocks);if($('#bt')) $('#bt').value='';drawTable();
 };
-$('#blocks').onclick=e=>{
+if($('#blocks')) $('#blocks').onclick=e=>{
   const x=+e.target.dataset.x, ed=+e.target.dataset.e;
   if(x){blocks=blocks.filter(b=>b.id!==x);store.set('blocks',blocks);drawTable()}
   if(ed){
     const b=blocks.find(b=>b.id===ed);
     if(b){
-      editId=ed;$('#bt').value=b.title;$('#bs').value=b.start;$('#be').value=b.end;
-      $('#bd').value=b.day;$('#bc').value=b.color;
-      $$('nav button').find(btn=>btn.dataset.t==='table').click();
+      editId=ed;
+      if($('#bt')) $('#bt').value=b.title;
+      if($('#bs')) $('#bs').value=b.start;
+      if($('#be')) $('#be').value=b.end;
+      if($('#bd')) $('#bd').value=b.day;
+      if($('#bc')) $('#bc').value=b.color;
+      $$('nav button').find(btn=>btn.dataset.t==='table')?.click();
     }
   }
 };
@@ -618,34 +881,38 @@ drawTable();
 
 /* ---------- Tasks & Rewards ---------- */
 let points=store.get('points',0);
-const showPts=()=>$('#pts').textContent=points+' pts';
+const showPts=()=>{ const p=$('#pts'); if(p) p.textContent=points+' pts'; };
 
 let tasks=store.get('tasks',[]),rewards=store.get('rewards',[{id:1,title:'30 min gaming',cost:40}]);
 function drawTasks(){
-  $('#tlist').innerHTML=tasks.length?tasks.map(t=>`<div class="item ${t.done?'done':''}">
+  const tlist = $('#tlist');
+  if(tlist) tlist.innerHTML=tasks.length?tasks.map(t=>`<div class="item ${t.done?'done':''}">
     <input type="checkbox" data-c="${t.id}" ${t.done?'checked':''}>
     <span class="t">${esc(t.title)}</span><button class="ico" data-x="${t.id}">Delete</button></div>`).join('')
     :'<div class="empty">No tasks yet.</div>';
-  $('#rlist').innerHTML=rewards.length?rewards.map(r=>`<div class="item"><span class="t">${esc(r.title)}</span>
+  const rlist = $('#rlist');
+  if(rlist) rlist.innerHTML=rewards.length?rewards.map(r=>`<div class="item"><span class="t">${esc(r.title)}</span>
     <b>${r.cost} pts</b><button class="b" data-r="${r.id}">Redeem</button>
     <button class="ico" data-rx="${r.id}">Delete</button></div>`).join('')
     :'<div class="empty">Add rewards to aim for!</div>';
   showPts();
 }
-$('#tadd').onclick=()=>{const v=$('#tt').value.trim();if(!v)return;
-  tasks.push({id:Date.now(),title:v,pts:+$('#td').value,done:false});$('#tt').value='';store.set('tasks',tasks);drawTasks()};
-$('#tlist').onchange=e=>{const id=+e.target.dataset.c;if(!id)return;
-  const t=tasks.find(t=>t.id===id);t.done=e.target.checked;points+=t.done?t.pts:-t.pts;if(points<0)points=0;
+if($('#tadd')) $('#tadd').onclick=()=>{const v=$('#tt')?.value.trim();if(!v)return;
+  tasks.push({id:Date.now(),title:v,pts:+$('#td')?.value||10,done:false});if($('#tt')) $('#tt').value='';store.set('tasks',tasks);drawTasks()};
+if($('#tlist')) $('#tlist').onchange=e=>{const id=+e.target.dataset.c;if(!id)return;
+  const t=tasks.find(t=>t.id===id);if(t){ t.done=e.target.checked;points+=t.done?t.pts:-t.pts;if(points<0)points=0; }
   store.set('tasks',tasks);store.set('points',points);drawTasks()};
-$('#tlist').onclick=e=>{const id=+e.target.dataset.x;if(!id)return;tasks=tasks.filter(t=>t.id!==id);store.set('tasks',tasks);drawTasks()};
-$('#radd').onclick=()=>{const v=$('#rt').value.trim(),c=+$('#rc').value;if(!v||c<1)return;
-  rewards.push({id:Date.now(),title:v,cost:c});$('#rt').value='';store.set('rewards',rewards);drawTasks()};
-$('#rlist').onclick=e=>{
+if($('#tlist')) $('#tlist').onclick=e=>{const id=+e.target.dataset.x;if(!id)return;tasks=tasks.filter(t=>t.id!==id);store.set('tasks',tasks);drawTasks()};
+if($('#radd')) $('#radd').onclick=()=>{const v=$('#rt')?.value.trim(),c=+$('#rc')?.value;if(!v||c<1)return;
+  rewards.push({id:Date.now(),title:v,cost:c});if($('#rt')) $('#rt').value='';store.set('rewards',rewards);drawTasks()};
+if($('#rlist')) $('#rlist').onclick=e=>{
   const r=+e.target.dataset.r,x=+e.target.dataset.rx;
   if(r){
     const rw=rewards.find(a=>a.id===r);
-    if(points>=rw.cost){points-=rw.cost;store.set('points',points);drawTasks();alert('Enjoy: '+rw.title+'!')}
-    else{alert('Not enough points yet!')}
+    if(rw){
+      if(points>=rw.cost){points-=rw.cost;store.set('points',points);drawTasks();alert('Enjoy: '+rw.title+'!')}
+      else{alert('Not enough points yet!')}
+    }
   }
   if(x){rewards=rewards.filter(a=>a.id!==x);store.set('rewards',rewards);drawTasks()}
 };
@@ -655,11 +922,15 @@ drawTasks();
 function embed(url){
   const m=url.match(/open\.spotify\.com\/(?:intl-[a-z]+\/)?(playlist|album|track|artist|show)\/([A-Za-z0-9]+)/);
   if(!m)return false;
-  $('#player').innerHTML=`<iframe title="Spotify player" src="https://open.spotify.com/embed/${m[1]}/${m[2]}" height="352" allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture"></iframe>`;
+  const pl=$('#player');
+  if(pl) pl.innerHTML=`<iframe title="Spotify player" src="https://open.spotify.com/embed/${m[1]}/${m[2]}" height="352" allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture"></iframe>`;
   store.set('spotify',url);return true;
 }
-$('#spgo').onclick=()=>{if(!embed($('#sp').value.trim()))alert('Invalid Spotify URL.')};
-const saved=store.get('spotify','');if(saved){$('#sp').value=saved;embed(saved)}
+if($('#spgo')) $('#spgo').onclick=()=>{
+  const val = $('#sp')?.value.trim();
+  if(!val || !embed(val)) alert('Invalid Spotify URL.');
+};
+const saved=store.get('spotify','');if(saved){if($('#sp')) $('#sp').value=saved;embed(saved)}
 </script>
 </body>
 </html>
