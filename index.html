@@ -268,6 +268,10 @@ small{color:var(--mute)}
 <aside id="musicSidebar">
   <div class="card">
     <h2>🎵 Chill & Focus Audio</h2>
+    <div class="row" style="margin-bottom: 12px;">
+      <input type="text" id="spotifyInput" placeholder="Paste Spotify link..." style="flex:1; font-size: 0.9rem; padding: 8px;">
+      <button class="b" id="loadSpotifyBtn" style="padding: 8px 12px; font-size: 0.9rem;">Load</button>
+    </div>
     <div class="pl">
       <button class="on" data-src="https://open.spotify.com/embed/playlist/37i9dQZF1DX8Ueb1gM121r">🎧 Lofi Beats</button>
       <button data-src="https://open.spotify.com/embed/playlist/37i9dQZF1DX4sWSpwq3LiO">🎹 Peaceful Piano</button>
@@ -992,6 +996,25 @@ $$('.pl button').forEach(btn => {
     btn.classList.add('on');
     $('#sp').src = btn.dataset.src;
   });
+});
+
+// Custom Spotify Link Loader
+$('#loadSpotifyBtn').addEventListener('click', () => {
+  let url = $('#spotifyInput').value.trim();
+  if (!url) return;
+  
+  // Auto-convert standard Spotify share links to embed links
+  if (url.includes('open.spotify.com') && !url.includes('/embed/')) {
+    url = url.replace('open.spotify.com/', 'open.spotify.com/embed/');
+    // Remove query parameters like ?si=... which might break the embed
+    url = url.split('?')[0]; 
+  }
+  
+  // Clear selection from default presets
+  $$('.pl button').forEach(b => b.classList.remove('on'));
+  
+  $('#sp').src = url;
+  $('#spotifyInput').value = '';
 });
 
 // Initial Setup
