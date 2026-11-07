@@ -7,76 +7,39 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600&family=Nunito:wght@400;600;700&display=swap" rel="stylesheet">
-<!-- Include PDF.js Library for rendering local PDFs without browser object errors -->
-<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.min.js"></script>
 <style>
 :root{
   --bg:#f4effa;--bg2:#e9f6f1;--card:#ffffff;--ink:#2d2a4a;--mute:#7a7796;
   --line:#e2dcf0;--accent:#8a79f2;--accent2:#ff9e85;--mint:#6fd3b0;
   --gold:#ffc65c;--bad:#e5677b;--shadow:0 8px 24px rgba(138,121,242,0.15);
   --radius:18px;
-  --magic-glow: 0 0 15px rgba(138, 121, 242, 0.4);
 }
 [data-theme="dark"]{
   --bg:#161426;--bg2:#17262a;--card:#211d38;--ink:#f0edff;--mute:#9691bd;
   --line:#312c52;--accent:#9c8dff;--accent2:#ff9e85;--mint:#6fd3b0;
-  --gold:#ffc65c;--bad:#ff8097;--shadow:0 8px 24px rgba(0,0,0,0.4);
-  --magic-glow: 0 0 20px rgba(156, 141, 255, 0.5);
+  --gold:#ffc65c;--bad:#ff4b72;--shadow:0 8px 30px rgba(0,0,0,0.4);
 }
-
-/* Magic Realm Theme Extensions */
-[data-magic="true"] {
-  --bg: #0f0c1b;
-  --card: rgba(28, 22, 48, 0.85);
-  --ink: #e6e1ff;
-  --line: #453775;
-  --accent: #a855f7;
-  --accent2: #ec4899;
-  --gold: #fbbf24;
-  --shadow: 0 8px 32px rgba(168, 85, 247, 0.3);
-}
-[data-magic="true"] body {
-  background: radial-gradient(circle at 50% 20%, #1e1338 0%, #090613 100%);
-  position: relative;
-}
-/* Floating Magic Sparks Effect */
-#magicCanvas {
-  position: fixed;
-  top: 0; left: 0; width: 100vw; height: 100vh;
-  pointer-events: none;
-  z-index: 0;
-  display: none;
-}
-[data-magic="true"] #magicCanvas { display: block; }
-header, nav, main, .modal-overlay { position: relative; z-index: 1; }
-
-.fantasy-badge {
-  font-size: 1.2rem;
-  margin-right: 4px;
-}
-
-.streak-badge {
-  background: linear-gradient(135deg, #ff7e5f, #feb47b);
-  color: #fff;
-  font-weight: 800;
-  padding: 6px 14px;
-  border-radius: 999px;
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  box-shadow: 0 4px 14px rgba(255, 126, 95, 0.4);
+[data-theme="magic"]{
+  --bg:#0f0b1e;--bg2:#171133;--card:#1a1438;--ink:#f3e8ff;--mute:#a89bc9;
+  --line:#33265c;--accent:#b55fe6;--accent2:#ff70a6;--mint:#00f5d4;
+  --gold:#ffd166;--bad:#ff4b72;--shadow:0 8px 32px rgba(181,95,230,0.35);
 }
 
 *{box-sizing:border-box}
-body{margin:0;min-height:100vh;color:var(--ink);font:16px/1.55 Nunito,system-ui,sans-serif;background:var(--bg);transition:background .3s,color .3s}
+body{margin:0;min-height:100vh;color:var(--ink);font:16px/1.55 Nunito,system-ui,sans-serif;background:var(--bg);transition:background .3s,color .3s;position:relative}
+#magicCanvas{position:fixed;top:0;left:0;width:100vw;height:100vh;pointer-events:none;z-index:0;display:none}
+[data-theme="magic"] #magicCanvas{display:block}
+
+header,nav,main,.modal-overlay{position:relative;z-index:1}
 h1,h2,.clock,.mode,.tab-title{font-family:Fredoka,sans-serif}
 header{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:16px 24px;flex-wrap:wrap;border-bottom:1px solid var(--line)}
 h1{margin:0;font-size:1.6rem;font-weight:600;display:flex;align-items:center;gap:8px}
 .hr{display:flex;gap:12px;align-items:center}
 .pts{background:var(--gold);color:#4a3600;font-weight:700;padding:7px 16px;border-radius:999px;box-shadow:var(--shadow)}
+.streak{background:var(--accent2);color:#fff;font-weight:700;padding:7px 14px;border-radius:999px;display:flex;align-items:center;gap:4px;box-shadow:var(--shadow)}
 
-/* Theme switch */
-.theme-toggle{background:var(--card);border:1.5px solid var(--line);color:var(--ink);padding:7px 14px;border-radius:999px;cursor:pointer;font:inherit;font-weight:700;display:flex;align-items:center;gap:6px}
+/* Controls */
+select.theme-select{background:var(--card);border:1.5px solid var(--line);color:var(--ink);padding:7px 14px;border-radius:999px;cursor:pointer;font-weight:700}
 
 nav{display:flex;gap:8px;padding:12px 24px 0;flex-wrap:wrap}
 nav button{border:none;background:var(--card);color:var(--ink);padding:9px 20px;border-radius:999px;cursor:pointer;font:inherit;font-weight:700;transition:.2s}
@@ -84,10 +47,10 @@ nav button.on{background:var(--accent);color:#fff;box-shadow:var(--shadow)}
 
 main{display:grid;grid-template-columns:minmax(0,1fr) 340px;gap:20px;padding:20px 24px 40px;max-width:1400px;margin:0 auto}
 main.solo{grid-template-columns:minmax(0,1fr);max-width:1000px}
-@media(max-width:900px){main{grid-template-columns:1fr}}
+@media(max-width:768px){main{grid-template-columns:1fr}}
 
 section{display:none}section.on{display:block}
-.card{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);padding:20px;margin-bottom:16px;box-shadow:var(--shadow)}
+.card{position:relative;background:var(--card);border:1px solid var(--line);border-radius:var(--radius);padding:20px;margin-bottom:16px;box-shadow:var(--shadow)}
 h2{margin:0 0 12px;font-size:1.15rem;font-weight:600}
 input,select,button{font:inherit}
 input,select{padding:9px 12px;border:1px solid var(--line);border-radius:12px;background:var(--card);color:var(--ink);min-width:0}
@@ -104,10 +67,14 @@ button.b.alt:hover{border-color:var(--accent)}
 .num{width:78px}
 label.s{color:var(--mute);font-size:.9rem}
 
+/* Timer Top Controls */
+.timer-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;padding-right:48px}
+.timer-settings-btn{position:absolute;top:18px;right:18px;background:none;border:none;font-size:1.3rem;cursor:pointer;color:var(--mute)}
+.timer-settings-btn:hover{color:var(--accent)}
+
 /* PDF Multi-tab Viewer */
 .pdf-container{display:flex;flex-direction:column;height:calc(100vh - 210px);min-height:500px}
 .pdf-container.fullscreen{position:fixed;top:0;left:0;right:0;bottom:0;z-index:9999;height:100vh;margin:0;border-radius:0;background:var(--bg)}
-
 .pdf-tabs-bar{display:flex;align-items:center;gap:6px;overflow-x:auto;padding:6px 6px 0;background:var(--bg);border-bottom:1px solid var(--line)}
 .pdf-tab{display:flex;align-items:center;gap:8px;padding:8px 14px;background:var(--card);border:1px solid var(--line);border-bottom:none;border-radius:12px 12px 0 0;cursor:pointer;font-size:.9rem;font-weight:600;max-width:200px;white-space:nowrap;user-select:none}
 .pdf-tab.active{background:var(--accent);color:#fff;border-color:var(--accent)}
@@ -115,36 +82,25 @@ label.s{color:var(--mute);font-size:.9rem}
 .pdf-tab .close-tab{border:none;background:none;color:inherit;cursor:pointer;padding:0 2px;font-size:1.1rem;line-height:1;opacity:0.7}
 .pdf-tab .close-tab:hover{opacity:1}
 .add-tab-btn{border:none;background:var(--card);color:var(--ink);padding:6px 12px;border-radius:8px;cursor:pointer;font-weight:700}
-
 .pdf-toolbar{display:flex;gap:10px;align-items:center;padding:10px 14px;background:var(--card);border-bottom:1px solid var(--line);flex-wrap:wrap}
-.pdf-body{flex:1;position:relative;background:var(--card);overflow:hidden;display:flex;flex-direction:column}
-.pdf-frame{width:100%;height:100%;border:none;display:none;background:var(--card);overflow:auto}
+.pdf-body{flex:1;position:relative;background:var(--card);overflow:hidden}
+.pdf-frame{width:100%;height:100%;border:none;display:none}
 .pdf-frame.active{display:block}
-.pdf-canvas-container{display:flex;flex-direction:column;align-items:center;padding:16px;gap:12px;overflow-y:auto;height:100%;background:#525659}
-.pdf-page-canvas{box-shadow:0 4px 12px rgba(0,0,0,0.3);max-width:100%;border-radius:4px;background:#fff}
 .pdf-placeholder{display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;color:var(--mute);text-align:center;padding:20px;background:var(--card)}
+.icon-btn{padding:8px 12px;display:inline-flex;align-items:center;justify-content:center}
 
-.icon-btn{display:inline-flex;align-items:center;justify-content:center;width:40px;height:40px;padding:0;border-radius:12px;cursor:pointer;background:transparent;color:var(--ink);border:1.5px solid var(--line)}
-.icon-btn:hover{border-color:var(--accent);color:var(--accent)}
-
-/* School Timetable Floating Modal */
-.modal-overlay{position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.5);backdrop-filter:blur(4px);z-index:99990;display:none;align-items:center;justify-content:center;padding:20px}
+/* Floating Modal */
+.modal-overlay{display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.5);z-index:999;align-items:center;justify-content:center;padding:20px}
 .modal-overlay.open{display:flex}
-.modal-card{background:var(--card);border:1px solid var(--line);border-radius:24px;width:100%;max-width:900px;max-height:90vh;display:flex;flex-direction:column;box-shadow:var(--shadow);overflow:hidden}
-.modal-header{display:flex;justify-content:space-between;align-items:center;padding:16px 24px;border-bottom:1px solid var(--line)}
-.modal-body{padding:20px;overflow-y:auto;flex:1}
-.tt-grid{display:grid;grid-template-columns:70px repeat(7,1fr);gap:8px;min-width:700px}
-.tt-header{font-weight:700;text-align:center;padding:8px;background:var(--bg);border-radius:10px;font-size:0.9rem}
-.tt-time{font-weight:600;color:var(--mute);font-size:0.8rem;display:flex;align-items:center;justify-content:center}
-.tt-cell{min-height:54px;background:var(--bg);border-radius:10px;padding:6px;display:flex;flex-direction:column;justify-content:center;font-size:0.8rem;position:relative}
-.tt-slot{background:var(--c,#8a79f2);color:#fff;padding:4px 8px;border-radius:8px;font-weight:700;font-size:0.75rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.modal-content{background:var(--card);border-radius:var(--radius);padding:24px;width:100%;max-width:850px;max-height:85vh;overflow:auto;box-shadow:var(--shadow)}
+.grid-table{display:grid;grid-template-columns:80px repeat(7, 1fr);gap:4px;overflow-x:auto;min-width:650px;margin-top:12px}
+.grid-cell{background:var(--bg);padding:8px 4px;border-radius:8px;font-size:0.85rem;text-align:center;min-height:48px;display:flex;flex-direction:column;justify-content:center}
+.grid-header{font-weight:700;background:var(--accent);color:#fff}
 
 .item{display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid var(--line)}
 .item:last-child{border:none}
 .item .t{flex:1;min-width:0;overflow-wrap:anywhere}
 .done .t{text-decoration:line-through;color:var(--mute)}
-.tag{font-size:.8rem;padding:2px 10px;border-radius:999px;font-weight:700;color:#2d2a4a}
-.d5{background:#b5ecd4}.d10{background:#ffe29a}.d20{background:#ffb5a6}
 .ico{background:none;border:1px solid var(--line);color:var(--ink);border-radius:10px;padding:4px 10px;cursor:pointer}
 .blk{display:flex;gap:12px;align-items:center;padding:11px 14px;margin:8px 0;border-radius:14px;border-left:8px solid var(--c,#8a79f2);background:var(--bg)}
 .blk time{font-weight:700;font-variant-numeric:tabular-nums;white-space:nowrap}
@@ -157,18 +113,21 @@ small{color:var(--mute)}
 .pl{max-height:170px;overflow:auto;margin:8px 0}
 .pl button{display:block;width:100%;text-align:left;background:none;border:none;color:var(--ink);padding:7px 10px;border-radius:10px;cursor:pointer}
 .pl button:hover,.pl button.on{background:var(--bg)}
-.hide-music aside{position:fixed;left:-9999px;top:0;width:340px;height:520px;overflow:hidden}
+.hide-music aside{display:none}
+.hide-music main{grid-template-columns:minmax(0,1fr)}
 </style>
 </head>
 <body>
 
+<canvas id="magicCanvas"></canvas>
+
 <header>
-  <h1>🧙‍♂️ Study Desk <span class="fantasy-badge" id="dragonIcon" style="display:none">🐉</span></h1>
+  <h1>📚 Study Desk</h1>
   <div class="hr">
-    <div class="streak-badge" id="streakBadge" title="Daily Session Streak!">🔥 <span id="streakCount">0</span> Day Streak</div>
-    <select class="theme-toggle" id="themeSelect">
-      <option value="light">☀️ Light Theme</option>
-      <option value="dark">🌙 Dark Theme</option>
+    <div class="streak" id="streak">🔥 0 Days</div>
+    <select class="theme-select" id="themeSelect">
+      <option value="light">☀️ Light</option>
+      <option value="dark">🌙 Dark</option>
       <option value="magic">✨ Magic Realm</option>
     </select>
     <button class="b alt" id="mtoggle">Hide music</button>
@@ -179,49 +138,49 @@ small{color:var(--mute)}
 <nav id="nav">
   <button data-t="timer" class="on">⏱️ Timer</button>
   <button data-t="pdf">📄 Multi-Doc Reader</button>
-  <button data-t="modalTimetable">📅 School Timetable</button>
-  <button data-t="table">📝 Add Schedule Block</button>
+  <button id="openTimetableBtn">📅 School Timetable</button>
+  <button data-t="table">➕ Add Schedule</button>
   <button data-t="tasks">✅ Tasks & Rewards</button>
 </nav>
 
 <main id="main">
 <div>
 
-<canvas id="magicCanvas"></canvas>
-
 <section id="timer" class="on">
-  <div class="card" style="text-align:center;position:relative">
-    <button class="icon-btn" id="openSettingsBtn" style="position:absolute;top:16px;right:16px;z-index:2" title="Timer & Goal Settings">⚙️</button>
-    <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px;padding-right:48px;flex-wrap:wrap">
-      <span class="mode" id="mode">Focus</span>
-      <span class="fantasy-badge" id="wizardIcon" style="display:none;font-size:0.9rem;background:rgba(168,85,247,0.15);color:var(--accent);padding:4px 12px;border-radius:999px;font-weight:700">🔮 Wizard Focus Active</span>
-    </div>
-    <div class="clock" id="clock">25:00</div>
-    <div class="bar"><i id="fill"></i></div>
-    
-    <!-- Daily Goal Progress Bar -->
-    <div style="margin: 14px 0 8px; text-align: left;">
-      <div style="display:flex;justify-content:space-between;font-size:0.85rem;font-weight:700;color:var(--mute)">
-        <span>🎯 Daily Goal Progress</span>
-        <span id="goalText">0m / 120m</span>
+  <div class="card" style="text-align:center">
+    <button class="timer-settings-btn" id="openTimerSettings" title="Timer Settings">⚙️</button>
+    <div class="timer-header">
+      <div class="row" style="margin:0">
+        <button class="mode" id="modeBtn">Focus</button>
+        <button class="mode break" id="breakModeBtn" style="display:none">Break</button>
       </div>
-      <div class="bar" style="height:8px;margin:6px 0"><i id="goalFill" style="background:linear-gradient(90deg, #3b82f6, #10b981)"></i></div>
+      <span id="wizardBadge" style="display:none;font-weight:700;color:var(--accent)">🔮 Wizard Focus Active</span>
+    </div>
+    
+    <div class="clock" id="clock">25:00</div>
+    
+    <div class="bar">
+      <i id="fill"></i>
     </div>
 
-    <div class="row" style="justify-content:center">
+    <div class="row" style="justify-content:center;margin-top:16px">
       <button class="b" id="start">Start</button>
       <button class="b alt" id="reset">Reset</button>
-      <button class="b alt" id="skip" hidden>Skip break</button>
-      <button class="b alt" id="pipBtn">📌 Mini Floating Clock</button>
+      <button class="b alt" id="skip" hidden>Skip Break</button>
     </div>
-    <small id="sess">Focus sessions done today: 0</small>
-  </div>
-  <div class="card">
-    <h2>Preset Quick Select</h2>
-    <div class="row">
-      <button class="b alt" data-p="25,5">25 / 5 min</button>
-      <button class="b alt" data-p="50,10">50 / 10 min</button>
-      <button class="b alt" data-p="90,15">90 / 15 min</button>
+
+    <div style="margin-top:18px;font-weight:600;color:var(--mute)" id="sess">
+      Focus sessions done: 0
+    </div>
+
+    <div style="margin-top:16px;background:var(--bg);padding:12px;border-radius:12px">
+      <div style="display:flex;justify-content:space-between;font-weight:700;font-size:0.9rem;margin-bottom:6px">
+        <span>🎯 Daily Target</span>
+        <span id="targetLabel">0 / 120 mins</span>
+      </div>
+      <div class="bar" style="margin:0;height:8px">
+        <i id="targetFill" style="background:var(--mint);width:0%"></i>
+      </div>
     </div>
   </div>
 </section>
@@ -229,24 +188,22 @@ small{color:var(--mute)}
 <section id="pdf">
   <div class="card pdf-container" id="pdfContainer">
     <div class="pdf-tabs-bar" id="pdfTabsBar">
-      <button class="add-tab-btn" id="addTabBtn">+ New Tab</button>
+      <button class="add-tab-btn" id="addPdfTabBtn">+ New Tab</button>
     </div>
     <div class="pdf-toolbar">
-      <input type="file" id="pdfFileInput" accept="application/pdf" style="display:none">
-      <button class="b" id="uploadPdfBtn">📁 Open PDF File</button>
-      <span style="color:var(--mute);font-size:0.9rem">or</span>
-      <input id="pdfUrlInput" placeholder="Paste PDF or website URL..." style="flex:1;min-width:180px">
-      <button class="b alt" id="loadPdfUrlBtn">Load Link</button>
-      <button class="b alt" id="openExternalBtn" title="Open active doc in new browser window" style="display:none">↗️ Open Direct</button>
-      <button class="icon-btn" id="fullScreenPdfBtn" title="Toggle Fullscreen" aria-label="Toggle Fullscreen">
-        <svg id="fsExpandIcon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"/></svg>
-        <svg id="fsCompressIcon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:none"><path d="M8 3v3a2 2 0 0 1-2 2H3m18 0h-3a2 2 0 0 1 2-2V3m0 18v-3a2 2 0 0 1 2-2h3M3 16h3a2 2 0 0 1 2 2v3"/></svg>
-      </button>
+      <label class="b icon-btn" style="margin:0">
+        📁 Open PDF
+        <input type="file" id="pdfFileInput" accept="application/pdf" style="display:none">
+      </label>
+      <input type="text" id="pdfUrlInput" placeholder="Paste PDF or web URL (e.g. https://...)" style="flex:1">
+      <button class="b alt icon-btn" id="loadPdfUrlBtn">Load Link</button>
+      <button class="b alt icon-btn" id="pdfFullscreenBtn" title="Toggle Fullscreen">⛶</button>
     </div>
     <div class="pdf-body" id="pdfBody">
       <div class="pdf-placeholder" id="pdfPlaceholder">
-        <h3>No Document Selected</h3>
-        <p>Click "Open PDF File" to select a PDF from your device or paste a URL above.</p>
+        <span style="font-size:3rem;margin-bottom:12px">📄</span>
+        <p style="font-weight:700;margin:0 0 4px;font-size:1.1rem">No Document Open</p>
+        <p style="margin:0;font-size:0.9rem">Upload a local PDF file or load a web link above.</p>
       </div>
     </div>
   </div>
@@ -254,683 +211,780 @@ small{color:var(--mute)}
 
 <section id="table">
   <div class="card">
-    <h2>Timetable List</h2>
-    <div class="days" id="days"></div>
-    <div id="blocks"></div>
+    <h2>➕ Add Class / Schedule Block</h2>
+    <div class="days" id="dayPicker">
+      <button data-d="0">Mon</button>
+      <button data-d="1">Tue</button>
+      <button data-d="2">Wed</button>
+      <button data-d="3">Thu</button>
+      <button data-d="4">Fri</button>
+      <button data-d="5">Sat</button>
+      <button data-d="6">Sun</button>
+    </div>
+    <div class="row">
+      <input type="time" id="ts" value="08:00">
+      <span style="color:var(--mute)">to</span>
+      <input type="time" id="te" value="09:00">
+    </div>
+    <div class="row" style="margin-top:12px">
+      <input type="text" id="subj" placeholder="Subject / Class name" style="flex:1">
+      <input type="color" id="clr" value="#8a79f2" style="width:48px;height:42px;padding:2px;cursor:pointer">
+      <button class="b" id="addBlk">Add Block</button>
+    </div>
   </div>
   <div class="card">
-    <h2 id="formTitle">Add a block</h2>
-    <div class="row">
-      <input id="bt" placeholder="Subject or activity" style="flex:1;min-width:160px">
-      <select id="bd"></select>
-    </div>
-    <div class="row">
-      <label class="s">From</label><input id="bs" type="time" value="09:00">
-      <label class="s">To</label><input id="be" type="time" value="10:00">
-      <input id="bc" type="color" value="#8a79f2" aria-label="Block colour">
-    </div>
-    <div class="row">
-      <button class="b" id="bsave">Add block</button>
-      <button class="b alt" id="bcancel" hidden>Cancel edit</button>
-    </div>
+    <h2>📋 Saved Schedule Blocks</h2>
+    <div id="blklst"></div>
   </div>
 </section>
 
 <section id="tasks">
   <div class="card">
-    <h2>To-do list</h2>
+    <h2>✅ Daily Tasks</h2>
     <div class="row">
-      <input id="tt" placeholder="New task" style="flex:1;min-width:160px">
-      <select id="td">
-        <option value="5">Easy (5 pts)</option>
-        <option value="10" selected>Medium (10 pts)</option>
-        <option value="20">Hard (20 pts)</option>
-      </select>
-      <button class="b" id="tadd">Add task</button>
+      <input type="text" id="ti" placeholder="Add a new task..." style="flex:1">
+      <input type="number" id="tp" class="num" value="10" min="5" step="5" placeholder="pts">
+      <button class="b" id="at">Add Task</button>
     </div>
-    <div id="tlist"></div>
+    <div id="tl" style="margin-top:12px"></div>
   </div>
+  
   <div class="card">
-    <h2>Rewards</h2>
+    <h2>🎁 Reward Shop</h2>
     <div class="row">
-      <input id="rt" placeholder="Reward (e.g. 30 min of gaming)" style="flex:1;min-width:160px">
-      <input id="rc" class="num" type="number" min="1" value="50"> pts
-      <button class="b" id="radd">Add reward</button>
+      <input type="text" id="ri" placeholder="Add custom reward..." style="flex:1">
+      <input type="number" id="rp" class="num" value="50" min="10" step="10" placeholder="pts">
+      <button class="b" id="ar">Add Reward</button>
     </div>
-    <div id="rlist"></div>
+    <div id="rl" style="margin-top:12px"></div>
   </div>
 </section>
-
 </div>
 
 <aside id="musicSidebar">
   <div class="card">
-    <h2>Spotify Player</h2>
-    <div id="auth"></div>
-    <div class="pl" id="pl"></div>
-    <div id="player"></div>
-    <div class="row" style="margin-top:12px">
-      <input id="sp" placeholder="Paste Spotify link" style="flex:1">
-      <button class="b" id="spgo">Load</button>
+    <h2>🎵 Chill & Focus Audio</h2>
+    <div class="pl">
+      <button class="on" data-src="https://open.spotify.com/embed/playlist/37i9dQZF1DX8Ueb1gM121r">🎧 Lofi Beats</button>
+      <button data-src="https://open.spotify.com/embed/playlist/37i9dQZF1DX4sWSpwq3LiO">🎹 Peaceful Piano</button>
+      <button data-src="https://open.spotify.com/embed/playlist/37i9dQZF1DWZeKCadgRdKQ">🌧️ Ambient Rain</button>
     </div>
+    <iframe id="sp" src="https://open.spotify.com/embed/playlist/37i9dQZF1DX8Ueb1gM121r" height="280" allow="encrypted-media"></iframe>
   </div>
 </aside>
 </main>
 
-<!-- Floating School Timetable Modal -->
+<!-- Timetable Modal -->
 <div class="modal-overlay" id="timetableModal">
-  <div class="modal-card">
-    <div class="modal-header">
-      <h2 style="margin:0">📅 School Timetable</h2>
-      <button class="ico" id="closeModalBtn" style="font-size:1.2rem;line-height:1">✕</button>
+  <div class="modal-content">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+      <h2 style="margin:0">📅 School Timetable Grid</h2>
+      <button class="close-tab" id="closeTimetableModal" style="font-size:1.4rem;border:none;background:none;cursor:pointer;color:var(--ink)">✕</button>
     </div>
-    <div class="modal-body">
-      <div class="tt-grid" id="modalTtGrid"></div>
+    <div id="modalGridContainer"></div>
+  </div>
+</div>
+
+<!-- Timer Settings Modal -->
+<div class="modal-overlay" id="timerModal">
+  <div class="modal-content" style="max-width:440px">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
+      <h2 style="margin:0">⚙️ Timer & Goal Settings</h2>
+      <button class="close-tab" id="closeTimerModal" style="font-size:1.4rem;border:none;background:none;cursor:pointer;color:var(--ink)">✕</button>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:14px">
+      <div>
+        <label class="s" style="display:block;margin-bottom:4px">Focus Duration (minutes):</label>
+        <input type="number" id="focusDurInput" value="25" min="1" max="120" style="width:100%">
+      </div>
+      <div>
+        <label class="s" style="display:block;margin-bottom:4px">Break Duration (minutes):</label>
+        <input type="number" id="breakDurInput" value="5" min="1" max="60" style="width:100%">
+      </div>
+      <div>
+        <label class="s" style="display:block;margin-bottom:4px">Daily Goal (minutes):</label>
+        <input type="number" id="dailyGoalInput" value="120" min="10" max="1440" style="width:100%">
+      </div>
+      <button class="b" id="saveTimerSettings" style="margin-top:8px">Save Settings</button>
     </div>
   </div>
 </div>
 
-<!-- Floating Timer Settings & Goal Modal -->
-<div class="modal-overlay" id="settingsModal">
-  <div class="modal-card" style="max-width:500px">
-    <div class="modal-header">
-      <h2 style="margin:0">⚙️ Timer &amp; Daily Study Goal</h2>
-      <button class="ico" id="closeSettingsBtn" style="font-size:1.2rem;line-height:1">✕</button>
-    </div>
-    <div class="modal-body">
-      <h3>Focus Session Duration</h3>
-      <div class="row">
-        <label class="s">Focus Time:</label>
-        <input class="num" id="fh" type="number" min="0" value="0"> h
-        <input class="num" id="fm" type="number" min="1" value="25"> min
-      </div>
-      
-      <h3 style="margin-top:16px">Break Duration</h3>
-      <div class="row">
-        <label class="s">Break Time:</label>
-        <input class="num" id="bh" type="number" min="0" value="0"> h
-        <input class="num" id="bm" type="number" min="1" value="5"> min
-      </div>
-      <div class="row">
-        <label><input type="checkbox" id="brk" checked> Auto-start breaks after focus</label>
-      </div>
-
-      <h3 style="margin-top:16px">🎯 Daily Study Target</h3>
-      <div class="row">
-        <label class="s">Target Study Time:</label>
-        <input class="num" id="gh" type="number" min="0" value="2"> h
-        <input class="num" id="gm" type="number" min="0" value="0"> min
-      </div>
-
-      <div class="row" style="margin-top:20px;justify-content:flex-end">
-        <button class="b" id="saveSettingsBtn">Save &amp; Apply</button>
-      </div>
-    </div>
+<!-- Message Box Modal -->
+<div class="modal-overlay" id="msgModal" style="z-index:9999">
+  <div class="modal-content" style="max-width:320px;text-align:center;padding:20px">
+    <p id="msgText" style="font-weight:700;font-size:1.1rem;margin:0 0 16px"></p>
+    <button class="b" id="closeMsgBtn" style="width:100%">OK</button>
   </div>
 </div>
 
 <script>
-/* Global selector helpers */
-const $=s=>document.querySelector(s), $$=s=>[...document.querySelectorAll(s)];
+// Helper selectors
+const $ = s => document.querySelector(s);
+const $$ = s => document.querySelectorAll(s);
 
-// Configure PDF.js worker URL
-if(window.pdfjsLib){
-  pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.worker.min.js';
-}
-
-const store={
-  get(k,d){try{const v=localStorage.getItem('sd_'+k);return v?JSON.parse(v):d}catch(e){return d}},
-  set(k,v){try{localStorage.setItem('sd_'+k,JSON.stringify(v))}catch(e){}},
-  del(k){try{localStorage.removeItem('sd_'+k)}catch(e){}}
-};
-const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-
-/* Theme & Magic Mode Handling */
-function applyThemeMode(val){
-  if(val==='magic'){
-    document.documentElement.setAttribute('data-theme', 'dark');
-    document.documentElement.setAttribute('data-magic', 'true');
-    $('#dragonIcon').style.display = 'inline';
-    $('#wizardIcon').style.display = 'inline';
-  } else {
-    document.documentElement.setAttribute('data-theme', val);
-    document.documentElement.setAttribute('data-magic', 'false');
-    $('#dragonIcon').style.display = 'none';
-    $('#wizardIcon').style.display = 'none';
+// Local storage helper
+const store = {
+  get: (k, d) => {
+    try { return JSON.parse(localStorage.getItem('sd_' + k)) ?? d; }
+    catch { return d; }
+  },
+  set: (k, v) => {
+    try { localStorage.setItem('sd_' + k, JSON.stringify(v)); } catch {}
   }
-  store.set('themeMode', val);
+};
+
+// Application State
+let points = store.get('pts', 0);
+let streakDays = store.get('streak', 0);
+let todayMinutes = store.get('todayMins', 0);
+let lastStudyDate = store.get('lastDate', '');
+
+let focusDur = store.get('focusDur', 25);
+let breakDur = store.get('breakDur', 5);
+let dailyGoal = store.get('dailyGoal', 120);
+
+let timerState = {
+  mode: 'focus', // 'focus' or 'break'
+  secondsLeft: focusDur * 60,
+  totalSeconds: focusDur * 60,
+  running: false,
+  timerId: null,
+  completedSessions: store.get('sess', 0)
+};
+
+let pdfTabs = [];
+let activeTabId = null;
+let blocks = store.get('blocks', []);
+let tasks = store.get('tasks', []);
+let rewards = store.get('rewards', []);
+let selectedDays = [0, 1, 2, 3, 4];
+
+// Message Box Helper
+function showMsg(txt) {
+  $('#msgText').textContent = txt;
+  $('#msgModal').classList.add('open');
+}
+$('#closeMsgBtn').addEventListener('click', () => $('#msgModal').classList.remove('open'));
+
+// Setup Theme Handling
+function initTheme() {
+  const currentTheme = store.get('theme', 'light');
+  $('#themeSelect').value = currentTheme;
+  document.body.setAttribute('data-theme', currentTheme);
+  updateWizardBadge();
+  initMagicParticles();
 }
 
-if($('#themeSelect')){
-  const savedMode = store.get('themeMode', 'light');
-  $('#themeSelect').value = savedMode;
-  applyThemeMode(savedMode);
-  $('#themeSelect').onchange = (e) => applyThemeMode(e.target.value);
+$('#themeSelect').addEventListener('change', (e) => {
+  const t = e.target.value;
+  document.body.setAttribute('data-theme', t);
+  store.set('theme', t);
+  updateWizardBadge();
+  initMagicParticles();
+});
+
+function updateWizardBadge() {
+  const isMagic = document.body.getAttribute('data-theme') === 'magic';
+  const badge = $('#wizardBadge');
+  if (badge) badge.style.display = isMagic ? 'inline-block' : 'none';
 }
 
-/* Nav Tab Switching Logic */
-$('#nav').onclick=e=>{
-  const t=e.target.dataset.t;
-  if(!t)return;
-  if(t==='modalTimetable'){
-    renderModalGrid();
-    $('#timetableModal')?.classList.add('open');
+// Magic Realm Canvas Particle System
+let particles = [];
+let animId = null;
+function initMagicParticles() {
+  const canvas = $('#magicCanvas');
+  if (!canvas) return;
+  const ctx = canvas.getContext('2d');
+  
+  function resize() {
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+  }
+  resize();
+  window.removeEventListener('resize', resize);
+  window.addEventListener('resize', resize);
+
+  particles = [];
+  const particleCount = 80;
+  for (let i = 0; i < particleCount; i++) {
+    particles.push({
+      x: Math.random() * canvas.width,
+      y: Math.random() * canvas.height,
+      r: Math.random() * 2.8 + 1,
+      dx: (Math.random() - 0.5) * 0.6,
+      dy: (Math.random() - 0.5) * 0.6 - 0.2,
+      alpha: Math.random(),
+      fade: (Math.random() * 0.015 + 0.005) * (Math.random() < 0.5 ? 1 : -1),
+      color: Math.random() < 0.5 ? '#b55fe6' : '#00f5d4'
+    });
+  }
+
+  if (animId) cancelAnimationFrame(animId);
+  
+  function render() {
+    if (document.body.getAttribute('data-theme') !== 'magic') {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      return;
+    }
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    
+    particles.forEach(p => {
+      p.x += p.dx;
+      p.y += p.dy;
+      p.alpha += p.fade;
+      if (p.alpha <= 0.1 || p.alpha >= 1) p.fade = -p.fade;
+      if (p.x < 0) p.x = canvas.width;
+      if (p.x > canvas.width) p.x = 0;
+      if (p.y < 0) p.y = canvas.height;
+      if (p.y > canvas.height) p.y = 0;
+
+      ctx.beginPath();
+      ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
+      ctx.fillStyle = p.color;
+      ctx.globalAlpha = Math.max(0.1, Math.min(1, p.alpha));
+      ctx.shadowBlur = 12;
+      ctx.shadowColor = p.color;
+      ctx.fill();
+      ctx.globalAlpha = 1.0;
+    });
+    animId = requestAnimationFrame(render);
+  }
+  render();
+}
+
+// Navigation Tabs
+$$('#nav button[data-t]').forEach(btn => {
+  btn.addEventListener('click', () => {
+    $$('#nav button').forEach(b => b.classList.remove('on'));
+    btn.classList.add('on');
+    const target = btn.dataset.t;
+    $$('section').forEach(s => s.classList.remove('on'));
+    const sec = $('#' + target);
+    if (sec) sec.classList.add('on');
+  });
+});
+
+// Timetable Modal Launcher
+$('#openTimetableBtn').addEventListener('click', () => {
+  renderModalGrid();
+  $('#timetableModal').classList.add('open');
+});
+$('#closeTimetableModal').addEventListener('click', () => {
+  $('#timetableModal').classList.remove('open');
+});
+
+// Timer Settings Modal
+$('#openTimerSettings').addEventListener('click', () => {
+  $('#focusDurInput').value = focusDur;
+  $('#breakDurInput').value = breakDur;
+  $('#dailyGoalInput').value = dailyGoal;
+  $('#timerModal').classList.add('open');
+});
+$('#closeTimerModal').addEventListener('click', () => {
+  $('#timerModal').classList.remove('open');
+});
+$('#saveTimerSettings').addEventListener('click', () => {
+  focusDur = parseInt($('#focusDurInput').value) || 25;
+  breakDur = parseInt($('#breakDurInput').value) || 5;
+  dailyGoal = parseInt($('#dailyGoalInput').value) || 120;
+  
+  store.set('focusDur', focusDur);
+  store.set('breakDur', breakDur);
+  store.set('dailyGoal', dailyGoal);
+  
+  $('#timerModal').classList.remove('open');
+  resetTimer();
+  updateTargetProgress();
+});
+
+// Music Toggle Handler
+$('#mtoggle').addEventListener('click', () => {
+  const body = document.body;
+  const btn = $('#mtoggle');
+  if (body.classList.contains('hide-music')) {
+    body.classList.remove('hide-music');
+    btn.textContent = 'Hide music';
+  } else {
+    body.classList.add('hide-music');
+    btn.textContent = 'Show music';
+  }
+});
+
+// Timer Engine
+function updateClockDisplay() {
+  const m = String(Math.floor(timerState.secondsLeft / 60)).padStart(2, '0');
+  const s = String(timerState.secondsLeft % 60).padStart(2, '0');
+  $('#clock').textContent = `${m}:${s}`;
+  
+  const pct = ((timerState.totalSeconds - timerState.secondsLeft) / timerState.totalSeconds) * 100;
+  $('#fill').style.width = `${pct}%`;
+}
+
+function updatePoints(amount) {
+  points += amount;
+  $('#pts').textContent = `${points} pts`;
+  store.set('pts', points);
+}
+
+function updateTargetProgress() {
+  $('#targetLabel').textContent = `${todayMinutes} / ${dailyGoal} mins`;
+  const pct = Math.min(100, (todayMinutes / dailyGoal) * 100);
+  $('#targetFill').style.width = `${pct}%`;
+}
+
+function checkStreak() {
+  const today = new Date().toDateString();
+  if (lastStudyDate !== today) {
+    const yesterday = new Date(Date.now() - 86400000).toDateString();
+    if (lastStudyDate === yesterday) {
+      // Streak continues
+    } else if (lastStudyDate !== '') {
+      streakDays = 0; // Reset streak if missed days
+    }
+  }
+  $('#streak').textContent = `🔥 ${streakDays} Days`;
+}
+
+function startTimer() {
+  if (timerState.running) {
+    clearInterval(timerState.timerId);
+    timerState.running = false;
+    $('#start').textContent = 'Start';
     return;
   }
-  $$('nav button').forEach(b=>b.classList.toggle('on',b.dataset.t===t));
-  $$('section').forEach(s=>s.classList.toggle('on',s.id===t));
-};
-
-/* Music Hide / Show Handler */
-function setHidden(h){
-  document.body.classList.toggle('hide-music',h);
-  $('#main')?.classList.toggle('solo',h);
-  if($('#mtoggle')){
-    $('#mtoggle').textContent=h?'Show music':'Hide music';
-  }
-  store.set('hideMusic',h);
-}
-if($('#mtoggle')){
-  $('#mtoggle').onclick=()=>setHidden(!document.body.classList.contains('hide-music'));
-}
-setHidden(store.get('hideMusic',false));
-
-/* Magic Canvas Animation */
-(function initMagicCanvas(){
-  const canvas = $('#magicCanvas');
-  if(!canvas) return;
-  const ctx = canvas.getContext('2d');
-  let width = canvas.width = window.innerWidth;
-  let height = canvas.height = window.innerHeight;
-  window.onresize = () => { width = canvas.width = window.innerWidth; height = canvas.height = window.innerHeight; };
   
-  const particles = Array.from({length: 45}, () => ({
-    x: Math.random() * width,
-    y: Math.random() * height,
-    size: Math.random() * 3 + 1,
-    speedY: -Math.random() * 0.8 - 0.2,
-    speedX: Math.random() * 0.4 - 0.2,
-    opacity: Math.random() * 0.7 + 0.3
-  }));
-
-  function animate(){
-    if(document.documentElement.getAttribute('data-magic')==='true'){
-      ctx.clearRect(0, 0, width, height);
-      particles.forEach(p => {
-        p.y += p.speedY;
-        p.x += p.speedX;
-        if(p.y < 0) p.y = height;
-        if(p.x < 0 || p.x > width) p.x = Math.random() * width;
+  timerState.running = true;
+  $('#start').textContent = 'Pause';
+  
+  timerState.timerId = setInterval(() => {
+    if (timerState.secondsLeft > 0) {
+      timerState.secondsLeft--;
+      updateClockDisplay();
+    } else {
+      clearInterval(timerState.timerId);
+      timerState.running = false;
+      $('#start').textContent = 'Start';
+      
+      if (timerState.mode === 'focus') {
+        timerState.completedSessions++;
+        store.set('sess', timerState.completedSessions);
+        $('#sess').textContent = `Focus sessions done: ${timerState.completedSessions}`;
         
-        ctx.beginPath();
-        ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
-        ctx.fillStyle = `rgba(192, 132, 252, ${p.opacity})`;
-        ctx.shadowBlur = 10;
-        ctx.shadowColor = '#c084fc';
-        ctx.fill();
-      });
+        todayMinutes += focusDur;
+        store.set('todayMins', todayMinutes);
+        
+        const today = new Date().toDateString();
+        if (lastStudyDate !== today) {
+          streakDays++;
+          lastStudyDate = today;
+          store.set('streak', streakDays);
+          store.set('lastDate', lastStudyDate);
+          checkStreak();
+        }
+        
+        updatePoints(10);
+        updateTargetProgress();
+        switchMode('break');
+      } else {
+        switchMode('focus');
+      }
     }
-    requestAnimationFrame(animate);
-  }
-  animate();
-})();
+  }, 1000);
+}
 
-/* ---------- Timer, Streak & Daily Goals ---------- */
-let mode='focus',total=1500,left=1500,running=false,endAt=0,tick=null;
-let sessions=store.get('sessions',0);
-let totalStudiedSecs=store.get('todayStudiedSecs',0);
-let dailyGoalSecs=store.get('dailyGoalSecs', 7200); // 2h default
-let streak=store.get('streak', 0);
-let lastStudyDate=store.get('lastStudyDate', '');
+function resetTimer() {
+  clearInterval(timerState.timerId);
+  timerState.running = false;
+  $('#start').textContent = 'Start';
+  timerState.secondsLeft = timerState.totalSeconds;
+  updateClockDisplay();
+}
 
-// Check & update streak logic
-function checkStreak(){
-  const today = new Date().toISOString().slice(0, 10);
-  if(!lastStudyDate){
-    streak = 0;
+function switchMode(newMode) {
+  timerState.mode = newMode;
+  if (newMode === 'focus') {
+    timerState.totalSeconds = focusDur * 60;
+    $('#modeBtn').style.display = 'inline-block';
+    $('#breakModeBtn').style.display = 'none';
+    $('#skip').hidden = true;
   } else {
-    const lastDate = new Date(lastStudyDate);
-    const currDate = new Date(today);
-    const diffDays = Math.round((currDate - lastDate) / (1000 * 60 * 60 * 24));
-    if(diffDays > 1){
-      streak = 0; // Streak reset if missed a day
+    timerState.totalSeconds = breakDur * 60;
+    $('#modeBtn').style.display = 'none';
+    $('#breakModeBtn').style.display = 'inline-block';
+    $('#skip').hidden = false;
+  }
+  timerState.secondsLeft = timerState.totalSeconds;
+  resetTimer();
+}
+
+// Timer Button Listeners
+$('#start').addEventListener('click', startTimer);
+$('#reset').addEventListener('click', resetTimer);
+$('#skip').addEventListener('click', () => switchMode('focus'));
+$('#modeBtn').addEventListener('click', () => switchMode('break'));
+$('#breakModeBtn').addEventListener('click', () => switchMode('focus'));
+
+// Multi-Tab Document Engine
+function createTab(title, type, src) {
+  const tabId = Date.now() + Math.floor(Math.random() * 10000);
+  pdfTabs.push({ id: tabId, title, type, src });
+
+  // Tab Selector Button
+  const tabBtn = document.createElement('div');
+  tabBtn.className = 'pdf-tab';
+  tabBtn.id = 'btn_' + tabId;
+  tabBtn.innerHTML = `
+    <span class="title" title="${title}">${title}</span>
+    <button class="close-tab" data-id="${tabId}">✕</button>
+  `;
+  tabBtn.addEventListener('click', (e) => {
+    if (!e.target.classList.contains('close-tab')) {
+      switchPdfTab(tabId);
     }
-  }
-  $('#streakCount').textContent = streak;
-  store.set('streak', streak);
-}
-checkStreak();
-
-const secs=(h,m)=>Math.max(0,(+$(h).value||0)*3600+(+$(m).value||0)*60);
-const fmt=s=>{const h=Math.floor(s/3600),m=Math.floor(s%3600/60),x=s%60,p=n=>String(n).padStart(2,'0');return (h?h+':':'')+p(m)+':'+p(x)};
-
-function updateGoalProgress(){
-  const goalMins = Math.round(dailyGoalSecs / 60);
-  const doneMins = Math.floor(totalStudiedSecs / 60);
-  $('#goalText').textContent = `${doneMins}m / ${goalMins}m`;
-  const pct = Math.min(100, Math.round((totalStudiedSecs / dailyGoalSecs) * 100));
-  $('#goalFill').style.width = pct + '%';
-}
-
-function draw(){
-  $('#clock').textContent=fmt(left);
-  $('#fill').style.width=(total?(100*(total-left)/total):0)+'%';
-  $('#mode').textContent=mode==='focus'?'Focus':'Break';
-  $('#mode').classList.toggle('break',mode==='break');
-  $('#skip').hidden=mode!=='break';
-  $('#start').textContent=running?'Pause':'Start';
-  $('#sess').textContent='Focus sessions done today: '+sessions;
-  updateGoalProgress();
-  document.title=(running?fmt(left)+' · ':'')+'Study Desk';
-}
-
-function load(m){mode=m;total=left=m==='focus'?secs('#fh','#fm'):secs('#bh','#bm');if(!total)total=left=60;draw()}
-function stop(){running=false;clearInterval(tick)}
-function begin(){
-  running=true;endAt=Date.now()+left*1000;clearInterval(tick);
-  tick=setInterval(()=>{
-    const now = Date.now();
-    left=Math.max(0,Math.round((endAt-now)/1000));
-    if(mode==='focus'){
-      totalStudiedSecs += 1;
-      store.set('todayStudiedSecs', totalStudiedSecs);
-    }
-    draw();
-    if(left<=0)finish();
-  },1000);
-  draw();
-}
-
-function finish(){
-  stop();
-  if(mode==='focus'){
-    sessions++;
-    store.set('sessions',sessions);
-    
-    // Increment Streak if first completed session of the day
-    const today = new Date().toISOString().slice(0, 10);
-    if(lastStudyDate !== today){
-      streak += 1;
-      lastStudyDate = today;
-      store.set('streak', streak);
-      store.set('lastStudyDate', today);
-      $('#streakCount').textContent = streak;
-    }
-
-    if($('#brk').checked){load('break');begin();return}load('focus');
-  }else{
-    load('focus');
-  }
-}
-
-/* Modal Timer & Goal Settings Handlers */
-if($('#openSettingsBtn')) $('#openSettingsBtn').onclick=()=>{
-  if($('#gh')) $('#gh').value = Math.floor(dailyGoalSecs / 3600);
-  if($('#gm')) $('#gm').value = Math.floor((dailyGoalSecs % 3600) / 60);
-  if($('#settingsModal')) $('#settingsModal').classList.add('open');
-};
-if($('#closeSettingsBtn')) $('#closeSettingsBtn').onclick=()=>$('#settingsModal')?.classList.remove('open');
-if($('#saveSettingsBtn')) $('#saveSettingsBtn').onclick=()=>{
-  dailyGoalSecs = secs('#gh', '#gm') || 3600;
-  store.set('dailyGoalSecs', dailyGoalSecs);
-  stop();
-  load('focus');
-  $('#settingsModal')?.classList.remove('open');
-};
-
-if($('#start')) $('#start').onclick=()=>running?(stop(),draw()):begin();
-if($('#reset')) $('#reset').onclick=()=>{stop();load('focus')};
-if($('#skip')) $('#skip').onclick=()=>{stop();load('focus');begin()};
-
-$$('[data-p]').forEach(b=>b.onclick=()=>{
-  const[f,k]=b.dataset.p.split(',').map(Number);
-  if($('#fh')) $('#fh').value=Math.floor(f/60);
-  if($('#fm')) $('#fm').value=f%60;
-  if($('#bh')) $('#bh').value=Math.floor(k/60);
-  if($('#bm')) $('#bm').value=k%60;
-  stop();load('focus');
-});
-load('focus');
-
-/* PiP Window */
-if($('#pipBtn')) $('#pipBtn').onclick=async()=>{
-  if('documentPictureInPicture' in window){
-    try{
-      const pipWin=await window.documentPictureInPicture.requestWindow({width:300,height:180});
-      pipWin.document.body.innerHTML=`<div style="font-family:sans-serif;text-align:center;padding:10px;">
-        <h2 id="pMode" style="margin:0">${mode==='focus'?'Focus':'Break'}</h2>
-        <div id="pClock" style="font-size:3rem;font-weight:bold">${fmt(left)}</div>
-      </div>`;
-      const timerInt=setInterval(()=>{
-        const c=pipWin.document.getElementById('pClock');
-        const m=pipWin.document.getElementById('pMode');
-        if(c)c.textContent=fmt(left);
-        if(m)m.textContent=mode==='focus'?'Focus':'Break';
-      },300);
-      pipWin.addEventListener('pagehide',()=>clearInterval(timerInt));
-      return;
-    }catch(e){}
-  }
-  alert('Mini Window active: Timer is tracking live in the tab title bar!');
-};
-
-/* ---------- Multi-Tab PDF & Web Document Viewer ---------- */
-let pdfTabs=[], activeTabId=null;
-
-async function renderPdfFileToTab(fileArrayBuffer, containerEl){
-  containerEl.innerHTML = '<div class="pdf-canvas-container" id="canvasContainer"><p style="color:#fff">Loading PDF pages...</p></div>';
-  const canvasContainer = containerEl.querySelector('#canvasContainer');
-  
-  try {
-    const pdf = await pdfjsLib.getDocument({data: fileArrayBuffer}).promise;
-    canvasContainer.innerHTML = ''; // clear loading text
-    
-    for(let pageNum = 1; pageNum <= pdf.numPages; pageNum++){
-      const page = await pdf.getPage(pageNum);
-      const viewport = page.getViewport({scale: 1.3});
-      
-      const canvas = document.createElement('canvas');
-      canvas.className = 'pdf-page-canvas';
-      const context = canvas.getContext('2d');
-      canvas.height = viewport.height;
-      canvas.width = viewport.width;
-      
-      const renderContext = {
-        canvasContext: context,
-        viewport: viewport
-      };
-      
-      canvasContainer.appendChild(canvas);
-      page.render(renderContext);
-    }
-  } catch(err) {
-    canvasContainer.innerHTML = `<div style="color:#fff;text-align:center;padding:20px">
-      <p>⚠️ Unable to parse PDF document directly.</p>
-      <small>${esc(err.message)}</small>
-    </div>`;
-  }
-}
-
-function createTab(title='Untitled Doc', src='', isArrayBuffer=false, rawData=null){
-  const id='tab_'+Date.now()+'_'+Math.floor(Math.random()*1000);
-  const tab={id, title, src, isArrayBuffer, rawData};
-  pdfTabs.push(tab);
-  
-  const frameContainer=document.createElement('div');
-  frameContainer.className='pdf-frame';
-  frameContainer.id='frame_'+id;
-  
-  const pdfBody = $('#pdfBody');
-  if(pdfBody) pdfBody.appendChild(frameContainer);
-  
-  if(isArrayBuffer && rawData && window.pdfjsLib){
-    renderPdfFileToTab(rawData, frameContainer);
-  } else if(src) {
-    frameContainer.innerHTML=`<iframe src="${esc(src)}" style="width:100%;height:100%;border:none;"></iframe>`;
-  }
-  
-  switchTab(id);
-  renderTabs();
-}
-
-function switchTab(id){
-  activeTabId=id;
-  $$('.pdf-frame').forEach(f=>f.classList.toggle('active', f.id==='frame_'+id));
-  const activeTab=pdfTabs.find(t=>t.id===id);
-  const placeholder=$('#pdfPlaceholder');
-  const openExt=$('#openExternalBtn');
-  
-  if(activeTab && (activeTab.src || activeTab.isArrayBuffer)){
-    if(placeholder) placeholder.style.display='none';
-    if(openExt && activeTab.src && !activeTab.isArrayBuffer){
-      openExt.style.display='inline-block';
-      openExt.onclick=()=>window.open(activeTab.src, '_blank');
-    } else if(openExt) {
-      openExt.style.display='none';
-    }
-  }else{
-    if(placeholder) placeholder.style.display='flex';
-    if(openExt) openExt.style.display='none';
-  }
-  renderTabs();
-}
-
-function closeTab(id, e){
-  if(e) e.stopPropagation();
-  pdfTabs=pdfTabs.filter(t=>t.id!==id);
-  const el=$('#frame_'+id);
-  if(el) el.remove();
-  
-  if(activeTabId===id){
-    if(pdfTabs.length>0){
-      switchTab(pdfTabs[pdfTabs.length-1].id);
-    }else{
-      activeTabId=null;
-      const placeholder=$('#pdfPlaceholder');
-      if(placeholder) placeholder.style.display='flex';
-      if($('#openExternalBtn')) $('#openExternalBtn').style.display='none';
-      renderTabs();
-    }
-  }else{
-    renderTabs();
-  }
-}
-
-function renderTabs(){
-  const container=$('#pdfTabsBar');
-  if(!container) return;
-  $$('.pdf-tab').forEach(t=>t.remove());
-  
-  const addBtn = $('#addTabBtn');
-  pdfTabs.forEach(tab=>{
-    const div=document.createElement('div');
-    div.className='pdf-tab'+(tab.id===activeTabId?' active':'');
-    div.onclick=()=>switchTab(tab.id);
-    div.innerHTML=`<span class="title">${esc(tab.title)}</span><button class="close-tab">×</button>`;
-    div.querySelector('.close-tab').onclick=(e)=>closeTab(tab.id, e);
-    if(addBtn) container.insertBefore(div, addBtn);
-    else container.appendChild(div);
   });
+
+  const addBtn = $('#addPdfTabBtn');
+  $('#pdfTabsBar').insertBefore(tabBtn, addBtn);
+
+  // Tab Content Frame
+  const frameContainer = document.createElement('div');
+  frameContainer.className = 'pdf-frame';
+  frameContainer.id = 'frame_' + tabId;
+  frameContainer.style.cssText = 'width:100%;height:100%;display:none;flex-direction:column;';
+
+  if (type === 'url') {
+    let isYouTube = false;
+    let displaySrc = src;
+    
+    // YouTube Auto-Embed Converter
+    try {
+      const urlObj = new URL(src.startsWith('http') ? src : 'https://' + src);
+      if (urlObj.hostname.includes('youtube.com') || urlObj.hostname.includes('youtu.be')) {
+        let videoId = '';
+        if (urlObj.searchParams.has('v')) {
+          videoId = urlObj.searchParams.get('v');
+        } else if (urlObj.hostname.includes('youtu.be')) {
+          videoId = urlObj.pathname.slice(1);
+        } else if (urlObj.pathname.startsWith('/embed/')) {
+          videoId = urlObj.pathname.split('/')[2];
+        } else if (urlObj.pathname.startsWith('/shorts/')) {
+          videoId = urlObj.pathname.split('/')[2];
+        }
+        
+        if (videoId) {
+          displaySrc = `https://www.youtube.com/embed/${videoId}`;
+          isYouTube = true;
+        }
+      }
+    } catch(e) {}
+
+    if (isYouTube) {
+      // YouTube needs feature policies to play media
+      frameContainer.innerHTML = `<iframe src="${displaySrc}" style="flex:1;width:100%;height:100%;border:none" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>`;
+    } else {
+      // Original Vanilla iframe (Best for LMS compatibility)
+      frameContainer.innerHTML = `
+        <div style="padding:8px 12px;background:var(--bg2);border-bottom:1px solid var(--line);display:flex;align-items:center;justify-content:space-between;font-size:0.85rem">
+          <span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:50%;color:var(--mute)">🔗 ${src}</span>
+          <div style="display:flex;gap:8px;align-items:center">
+            <span style="color:var(--mute);font-size:0.75rem;margin-right:4px">(If blank, use direct ➡️)</span>
+            <a href="${src}" target="_blank" rel="noopener noreferrer" class="b" style="padding:4px 10px;font-size:0.8rem;text-decoration:none;display:inline-flex;align-items:center;gap:4px">
+              ↗️ Open Direct
+            </a>
+          </div>
+        </div>
+        <iframe src="${displaySrc}" style="flex:1;width:100%;height:100%;border:none"></iframe>
+      `;
+    }
+  } else {
+    frameContainer.innerHTML = `<iframe src="${src}" style="width:100%;height:100%;border:none" allowfullscreen></iframe>`;
+  }
+  
+  $('#pdfBody').appendChild(frameContainer);
+  switchPdfTab(tabId);
 }
 
-if($('#addTabBtn')) $('#addTabBtn').onclick=()=>createTab('New Tab', '');
-if($('#uploadPdfBtn')) $('#uploadPdfBtn').onclick=()=>$('#pdfFileInput')?.click();
+function switchPdfTab(tabId) {
+  activeTabId = tabId;
+  $$('.pdf-tab').forEach(t => t.classList.remove('active'));
+  $$('.pdf-frame').forEach(f => {
+    f.classList.remove('active');
+    f.style.display = 'none';
+  });
 
-if($('#pdfFileInput')) $('#pdfFileInput').onchange=e=>{
-  const file=e.target.files[0];
-  if(!file)return;
+  const activeBtn = $('#btn_' + tabId);
+  const activeFrame = document.getElementById('frame_' + tabId);
   
-  const reader = new FileReader();
-  reader.onload = function(evt) {
-    const arrayBuffer = evt.target.result;
-    if(!activeTabId){
-      createTab(file.name, '', true, arrayBuffer);
-    }else{
-      const tab=pdfTabs.find(t=>t.id===activeTabId);
-      if(tab){
-        tab.title=file.name;
-        tab.src='';
-        tab.isArrayBuffer=true;
-        tab.rawData=arrayBuffer;
-      }
-      const el=$('#frame_'+activeTabId);
-      if(el){
-        renderPdfFileToTab(arrayBuffer, el);
-      }
-      switchTab(activeTabId);
-    }
-  };
-  reader.readAsArrayBuffer(file);
-};
-
-if($('#loadPdfUrlBtn')) $('#loadPdfUrlBtn').onclick=()=>{
-  let url=$('#pdfUrlInput')?.value.trim();
-  if(!url)return;
-  if(!/^https?:\/\//i.test(url)) url='https://'+url;
+  if (activeBtn) activeBtn.classList.add('active');
+  if (activeFrame) {
+    activeFrame.classList.add('active');
+    activeFrame.style.display = 'flex';
+  }
   
-  if(!activeTabId){
-    createTab('Web Doc', url);
-  }else{
-    const tab=pdfTabs.find(t=>t.id===activeTabId);
-    if(tab){
-      tab.title='Web Doc';
-      tab.src=url;
-      tab.isArrayBuffer=false;
-      tab.rawData=null;
-    }
-    const el=$('#frame_'+activeTabId);
-    if(el){
-      el.innerHTML=`<iframe src="${esc(url)}" style="width:100%;height:100%;border:none;"></iframe>`;
-    }
-    switchTab(activeTabId);
-  }
-};
+  $('#pdfPlaceholder').style.display = 'none';
+}
 
-/* Fullscreen Toggle */
-if($('#fullScreenPdfBtn')) $('#fullScreenPdfBtn').onclick=()=>{
-  const c=$('#pdfContainer');
-  if(!c) return;
-  const isFS=!!document.fullscreenElement;
-  if(!isFS){
-    if(c.requestFullscreen){
-      c.requestFullscreen().catch(()=>c.classList.add('fullscreen'));
-    }else{
-      c.classList.add('fullscreen');
-    }
-    if($('#fsExpandIcon')) $('#fsExpandIcon').style.display='none';
-    if($('#fsCompressIcon')) $('#fsCompressIcon').style.display='inline';
-  }else{
-    if(document.exitFullscreen){
-      document.exitFullscreen();
-    }
-    c.classList.remove('fullscreen');
-    if($('#fsExpandIcon')) $('#fsExpandIcon').style.display='inline';
-    if($('#fsCompressIcon')) $('#fsCompressIcon').style.display='none';
-  }
-};
+function closeTab(tabId) {
+  pdfTabs = pdfTabs.filter(t => t.id !== tabId);
+  const btn = $('#btn_' + tabId);
+  const frame = document.getElementById('frame_' + tabId);
+  if (btn) btn.remove();
+  if (frame) frame.remove();
 
-document.addEventListener('fullscreenchange', ()=>{
-  const isFS=!!document.fullscreenElement;
-  if($('#fsExpandIcon')) $('#fsExpandIcon').style.display=isFS?'none':'inline';
-  if($('#fsCompressIcon')) $('#fsCompressIcon').style.display=isFS?'inline':'none';
-  if(!isFS && $('#pdfContainer')) $('#pdfContainer').classList.remove('fullscreen');
+  if (activeTabId === tabId) {
+    if (pdfTabs.length > 0) {
+      switchPdfTab(pdfTabs[pdfTabs.length - 1].id);
+    } else {
+      activeTabId = null;
+      $('#pdfPlaceholder').style.display = 'flex';
+    }
+  }
+}
+
+// PDF Tab Click Delegates & Controls
+$('#pdfTabsBar').addEventListener('click', (e) => {
+  if (e.target.classList.contains('close-tab')) {
+    e.stopPropagation();
+    const id = parseInt(e.target.dataset.id);
+    closeTab(id);
+  }
 });
 
-createTab('Doc 1', '');
-
-/* ---------- School Timetable & Schedule ---------- */
-const DAYS=['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
-let blocks=store.get('blocks',[]),day=DAYS[(new Date().getDay()+6)%7],editId=null;
-if($('#bd')) $('#bd').innerHTML=DAYS.map(d=>`<option>${d}</option>`).join('');
-
-function drawTable(){
-  if($('#days')) $('#days').innerHTML=DAYS.map(d=>`<button class="${d===day?'on':''}" data-d="${d}">${d}</button>`).join('');
-  const list=blocks.filter(b=>b.day===day).sort((a,b)=>a.start.localeCompare(b.start));
-  if($('#blocks')) $('#blocks').innerHTML=list.length?list.map(b=>`<div class="blk" style="--c:${esc(b.color)}">
-    <time>${b.start}–${b.end}</time><span style="flex:1;overflow-wrap:anywhere">${esc(b.title)}</span>
-    <button class="ico" data-e="${b.id}">Edit</button><button class="ico" data-x="${b.id}">Delete</button></div>`).join('')
-    :'<div class="empty">Nothing planned for '+day+'. Add a block below.</div>';
-  renderModalGrid();
-}
-
-function renderModalGrid(){
-  const grid=$('#modalTtGrid');
-  if(!grid)return;
-  let html=`<div class="tt-header">Time</div>`+DAYS.map(d=>`<div class="tt-header">${d}</div>`).join('');
-  const times=['08:00','09:00','10:00','11:00','12:00','13:00','14:00','15:00','16:00','17:00'];
-  
-  times.forEach(t=>{
-    html+=`<div class="tt-time">${t}</div>`;
-    DAYS.forEach(d=>{
-      const match=blocks.find(b=>b.day===d && b.start<=t && b.end>t);
-      html+=`<div class="tt-cell">${match?`<div class="tt-slot" style="--c:${esc(match.color)}">${esc(match.title)}</div>`:''}</div>`;
-    });
+$('#addPdfTabBtn').addEventListener('click', () => {
+  activeTabId = null;
+  $$('.pdf-tab').forEach(t => t.classList.remove('active'));
+  $$('.pdf-frame').forEach(f => {
+    f.classList.remove('active');
+    f.style.display = 'none';
   });
-  grid.innerHTML=html;
+  $('#pdfPlaceholder').style.display = 'flex';
+  $('#pdfUrlInput').focus();
+});
+
+$('#pdfFileInput').addEventListener('change', (e) => {
+  const file = e.target.files[0];
+  if (file && file.type === 'application/pdf') {
+    const fileUrl = URL.createObjectURL(file);
+    createTab(file.name, 'file', fileUrl);
+    e.target.value = '';
+  }
+});
+
+$('#loadPdfUrlBtn').addEventListener('click', () => {
+  const input = $('#pdfUrlInput');
+  let url = input.value.trim();
+  if (url) {
+    if (!/^https?:\/\//i.test(url)) {
+      url = 'https://' + url;
+    }
+    createTab(url.replace(/^https?:\/\//i, ''), 'url', url);
+    input.value = '';
+  }
+});
+
+$('#pdfFullscreenBtn').addEventListener('click', () => {
+  $('#pdfContainer').classList.toggle('fullscreen');
+});
+
+// Schedule & Timetable Grid Logic
+const dayNames = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+
+function renderBlocks() {
+  const container = $('#blklst');
+  if (!container) return;
+  if (blocks.length === 0) {
+    container.innerHTML = '<div class="empty">No schedule blocks added yet.</div>';
+    return;
+  }
+  
+  container.innerHTML = blocks.map((b, i) => `
+    <div class="blk" style="--c:${b.color}">
+      <time>${b.start} - ${b.end}</time>
+      <div style="flex:1">
+        <strong>${b.subject}</strong>
+        <div style="font-size:0.8rem;color:var(--mute)">${b.days.map(d => dayNames[d]).join(', ')}</div>
+      </div>
+      <button class="ico" onclick="deleteBlock(${i})">🗑️</button>
+    </div>
+  `).join('');
 }
 
-if($('#openTimetableBtn')) $('#openTimetableBtn').onclick=()=>{renderModalGrid();$('#timetableModal')?.classList.add('open')};
-if($('#closeModalBtn')) $('#closeModalBtn').onclick=()=>$('#timetableModal')?.classList.remove('open');
-if($('#timetableModal')) $('#timetableModal').onclick=e=>{if(e.target===$('#timetableModal'))$('#timetableModal').classList.remove('open')};
+function deleteBlock(i) {
+  blocks.splice(i, 1);
+  store.set('blocks', blocks);
+  renderBlocks();
+}
 
-if($('#days')) $('#days').onclick=e=>{if(e.target.dataset.d){day=e.target.dataset.d;if($('#bd')) $('#bd').value=day;drawTable()}};
-if($('#bsave')) $('#bsave').onclick=()=>{
-  const title=$('#bt')?.value.trim(),start=$('#bs')?.value,end=$('#be')?.value;
-  if(!title||!start||!end||end<=start)return alert('End time must be after start time.');
-  const o={title,start,end,day:$('#bd').value,color:$('#bc').value};
-  if(editId){blocks=blocks.map(b=>b.id===editId?{...b,...o}:b)}else{blocks.push({id:Date.now(),...o})}
-  store.set('blocks',blocks);if($('#bt')) $('#bt').value='';drawTable();
-};
-if($('#blocks')) $('#blocks').onclick=e=>{
-  const x=+e.target.dataset.x, ed=+e.target.dataset.e;
-  if(x){blocks=blocks.filter(b=>b.id!==x);store.set('blocks',blocks);drawTable()}
-  if(ed){
-    const b=blocks.find(b=>b.id===ed);
-    if(b){
-      editId=ed;
-      if($('#bt')) $('#bt').value=b.title;
-      if($('#bs')) $('#bs').value=b.start;
-      if($('#be')) $('#be').value=b.end;
-      if($('#bd')) $('#bd').value=b.day;
-      if($('#bc')) $('#bc').value=b.color;
-      $$('nav button').find(btn=>btn.dataset.t==='table')?.click();
+$('#dayPicker').addEventListener('click', (e) => {
+  if (e.target.tagName === 'BUTTON') {
+    const d = parseInt(e.target.dataset.d);
+    if (selectedDays.includes(d)) {
+      selectedDays = selectedDays.filter(day => day !== d);
+      e.target.classList.remove('on');
+    } else {
+      selectedDays.push(d);
+      e.target.classList.add('on');
     }
   }
-};
-drawTable();
+});
 
-/* ---------- Tasks & Rewards ---------- */
-let points=store.get('points',0);
-const showPts=()=>{ const p=$('#pts'); if(p) p.textContent=points+' pts'; };
+$('#addBlk').addEventListener('click', () => {
+  const subject = $('#subj').value.trim();
+  const start = $('#ts').value;
+  const end = $('#te').value;
+  const color = $('#clr').value;
 
-let tasks=store.get('tasks',[]),rewards=store.get('rewards',[{id:1,title:'30 min gaming',cost:40}]);
-function drawTasks(){
-  const tlist = $('#tlist');
-  if(tlist) tlist.innerHTML=tasks.length?tasks.map(t=>`<div class="item ${t.done?'done':''}">
-    <input type="checkbox" data-c="${t.id}" ${t.done?'checked':''}>
-    <span class="t">${esc(t.title)}</span><button class="ico" data-x="${t.id}">Delete</button></div>`).join('')
-    :'<div class="empty">No tasks yet.</div>';
-  const rlist = $('#rlist');
-  if(rlist) rlist.innerHTML=rewards.length?rewards.map(r=>`<div class="item"><span class="t">${esc(r.title)}</span>
-    <b>${r.cost} pts</b><button class="b" data-r="${r.id}">Redeem</button>
-    <button class="ico" data-rx="${r.id}">Delete</button></div>`).join('')
-    :'<div class="empty">Add rewards to aim for!</div>';
-  showPts();
-}
-if($('#tadd')) $('#tadd').onclick=()=>{const v=$('#tt')?.value.trim();if(!v)return;
-  tasks.push({id:Date.now(),title:v,pts:+$('#td')?.value||10,done:false});if($('#tt')) $('#tt').value='';store.set('tasks',tasks);drawTasks()};
-if($('#tlist')) $('#tlist').onchange=e=>{const id=+e.target.dataset.c;if(!id)return;
-  const t=tasks.find(t=>t.id===id);if(t){ t.done=e.target.checked;points+=t.done?t.pts:-t.pts;if(points<0)points=0; }
-  store.set('tasks',tasks);store.set('points',points);drawTasks()};
-if($('#tlist')) $('#tlist').onclick=e=>{const id=+e.target.dataset.x;if(!id)return;tasks=tasks.filter(t=>t.id!==id);store.set('tasks',tasks);drawTasks()};
-if($('#radd')) $('#radd').onclick=()=>{const v=$('#rt')?.value.trim(),c=+$('#rc')?.value;if(!v||c<1)return;
-  rewards.push({id:Date.now(),title:v,cost:c});if($('#rt')) $('#rt').value='';store.set('rewards',rewards);drawTasks()};
-if($('#rlist')) $('#rlist').onclick=e=>{
-  const r=+e.target.dataset.r,x=+e.target.dataset.rx;
-  if(r){
-    const rw=rewards.find(a=>a.id===r);
-    if(rw){
-      if(points>=rw.cost){points-=rw.cost;store.set('points',points);drawTasks();alert('Enjoy: '+rw.title+'!')}
-      else{alert('Not enough points yet!')}
+  if (!subject) return showMsg('Please enter a subject name');
+  if (selectedDays.length === 0) return showMsg('Please select at least one day');
+
+  blocks.push({ subject, start, end, color, days: [...selectedDays] });
+  store.set('blocks', blocks);
+  $('#subj').value = '';
+  renderBlocks();
+});
+
+function renderModalGrid() {
+  const container = $('#modalGridContainer');
+  if (!container) return;
+
+  const hours = ['08:00', '09:00', '10:00', '11:00', '12:00', '13:00', '14:00', '15:00'];
+  let html = '<div class="grid-table">';
+  
+  // Header Row
+  html += '<div class="grid-cell grid-header">Time</div>';
+  dayNames.forEach(d => {
+    html += `<div class="grid-cell grid-header">${d}</div>`;
+  });
+
+  // Body Rows
+  hours.forEach(h => {
+    html += `<div class="grid-cell" style="font-weight:700">${h}</div>`;
+    for (let dayIdx = 0; dayIdx < 7; dayIdx++) {
+      const match = blocks.find(b => b.days.includes(dayIdx) && b.start <= h && b.end > h);
+      if (match) {
+        html += `<div class="grid-cell" style="background:${match.color};color:#fff;font-weight:600">${match.subject}</div>`;
+      } else {
+        html += '<div class="grid-cell"></div>';
+      }
     }
-  }
-  if(x){rewards=rewards.filter(a=>a.id!==x);store.set('rewards',rewards);drawTasks()}
-};
-drawTasks();
+  });
 
-/* ---------- Spotify Embed ---------- */
-function embed(url){
-  const m=url.match(/open\.spotify\.com\/(?:intl-[a-z]+\/)?(playlist|album|track|artist|show)\/([A-Za-z0-9]+)/);
-  if(!m)return false;
-  const pl=$('#player');
-  if(pl) pl.innerHTML=`<iframe title="Spotify player" src="https://open.spotify.com/embed/${m[1]}/${m[2]}" height="352" allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture"></iframe>`;
-  store.set('spotify',url);return true;
+  html += '</div>';
+  container.innerHTML = html;
 }
-if($('#spgo')) $('#spgo').onclick=()=>{
-  const val = $('#sp')?.value.trim();
-  if(!val || !embed(val)) alert('Invalid Spotify URL.');
-};
-const saved=store.get('spotify','');if(saved){if($('#sp')) $('#sp').value=saved;embed(saved)}
+
+// Tasks & Rewards
+function renderTasks() {
+  const container = $('#tl');
+  if (!container) return;
+  if (tasks.length === 0) {
+    container.innerHTML = '<div class="empty">No tasks added yet.</div>';
+    return;
+  }
+  container.innerHTML = tasks.map((t, i) => `
+    <div class="item ${t.done ? 'done' : ''}">
+      <input type="checkbox" ${t.done ? 'checked' : ''} onchange="toggleTask(${i})">
+      <span class="t">${t.text} (+${t.pts} pts)</span>
+      <button class="ico" onclick="deleteTask(${i})">🗑️</button>
+    </div>
+  `).join('');
+}
+
+function toggleTask(i) {
+  tasks[i].done = !tasks[i].done;
+  if (tasks[i].done) updatePoints(tasks[i].pts);
+  store.set('tasks', tasks);
+  renderTasks();
+}
+
+function deleteTask(i) {
+  tasks.splice(i, 1);
+  store.set('tasks', tasks);
+  renderTasks();
+}
+
+$('#at').addEventListener('click', () => {
+  const text = $('#ti').value.trim();
+  const pts = parseInt($('#tp').value) || 10;
+  if (!text) return;
+  tasks.push({ text, pts, done: false });
+  store.set('tasks', tasks);
+  $('#ti').value = '';
+  renderTasks();
+});
+
+function renderRewards() {
+  const container = $('#rl');
+  if (!container) return;
+  if (rewards.length === 0) {
+    container.innerHTML = '<div class="empty">No rewards added yet.</div>';
+    return;
+  }
+  container.innerHTML = rewards.map((r, i) => `
+    <div class="item">
+      <span class="t">${r.text} (${r.pts} pts)</span>
+      <button class="b alt" style="padding:4px 10px;font-size:0.85rem" onclick="claimReward(${i})">Claim</button>
+      <button class="ico" onclick="deleteReward(${i})">🗑️</button>
+    </div>
+  `).join('');
+}
+
+function claimReward(i) {
+  const r = rewards[i];
+  if (points >= r.pts) {
+    updatePoints(-r.pts);
+    showMsg(`🎉 Enjoy your reward: ${r.text}!`);
+  } else {
+    showMsg(`Need ${r.pts - points} more points to claim this reward!`);
+  }
+}
+
+function deleteReward(i) {
+  rewards.splice(i, 1);
+  store.set('rewards', rewards);
+  renderRewards();
+}
+
+$('#ar').addEventListener('click', () => {
+  const text = $('#ri').value.trim();
+  const pts = parseInt($('#rp').value) || 50;
+  if (!text) return;
+  rewards.push({ text, pts });
+  store.set('rewards', rewards);
+  $('#ri').value = '';
+  renderRewards();
+});
+
+// Spotify Playlist Selector
+$$('.pl button').forEach(btn => {
+  btn.addEventListener('click', () => {
+    $$('.pl button').forEach(b => b.classList.remove('on'));
+    btn.classList.add('on');
+    $('#sp').src = btn.dataset.src;
+  });
+});
+
+// Initial Setup
+window.addEventListener('DOMContentLoaded', () => {
+  initTheme();
+  checkStreak();
+  updateClockDisplay();
+  updateTargetProgress();
+  $('#pts').textContent = `${points} pts`;
+  $('#sess').textContent = `Focus sessions done: ${timerState.completedSessions}`;
+  
+  // Highlight active days in schedule picker
+  selectedDays.forEach(d => {
+    const btn = $(`#dayPicker button[data-d="${d}"]`);
+    if (btn) btn.classList.add('on');
+  });
+
+  renderBlocks();
+  renderTasks();
+  renderRewards();
+});
 </script>
 </body>
 </html>
