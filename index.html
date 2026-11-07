@@ -157,6 +157,10 @@ small{color:var(--mute)}
       <span id="wizardBadge" style="display:none;font-weight:700;color:var(--accent)">🔮 Wizard Focus Active</span>
     </div>
     
+    <div class="row" style="justify-content:center;margin-bottom:8px">
+      <input type="text" id="sessionLabel" placeholder="What are you focusing on?" style="text-align:center;font-size:1.1rem;background:transparent;border:none;border-bottom:2px dashed var(--mute);border-radius:0;padding:4px 8px;color:var(--ink);font-weight:600;width:80%;max-width:280px;outline:none">
+    </div>
+
     <div class="clock" id="clock">25:00</div>
     
     <div class="bar">
@@ -305,7 +309,12 @@ small{color:var(--mute)}
         <label class="s" style="display:block;margin-bottom:4px">Daily Goal (minutes):</label>
         <input type="number" id="dailyGoalInput" value="120" min="10" max="1440" style="width:100%">
       </div>
-      <button class="b" id="saveTimerSettings" style="margin-top:8px">Save Settings</button>
+      <div>
+        <label class="s" style="display:flex;align-items:center;gap:8px;margin-top:8px;cursor:pointer">
+          <input type="checkbox" id="autoSkipBreakInput" style="width:auto;margin:0"> Auto-skip breaks (Grind mode)
+        </label>
+      </div>
+      <button class="b" id="saveTimerSettings" style="margin-top:16px">Save Settings</button>
     </div>
   </div>
 </div>
@@ -343,6 +352,7 @@ let lastStudyDate = store.get('lastDate', '');
 let focusDur = store.get('focusDur', 25);
 let breakDur = store.get('breakDur', 5);
 let dailyGoal = store.get('dailyGoal', 120);
+let autoSkipBreak = store.get('autoSkipBreak', false);
 
 let timerState = {
   mode: 'focus', // 'focus' or 'break'
@@ -480,6 +490,7 @@ $('#openTimerSettings').addEventListener('click', () => {
   $('#focusDurInput').value = focusDur;
   $('#breakDurInput').value = breakDur;
   $('#dailyGoalInput').value = dailyGoal;
+  $('#autoSkipBreakInput').checked = autoSkipBreak;
   $('#timerModal').classList.add('open');
 });
 $('#closeTimerModal').addEventListener('click', () => {
@@ -489,12 +500,22 @@ $('#saveTimerSettings').addEventListener('click', () => {
   focusDur = parseInt($('#focusDurInput').value) || 25;
   breakDur = parseInt($('#breakDurInput').value) || 5;
   dailyGoal = parseInt($('#dailyGoalInput').value) || 120;
+  autoSkipBreak = $('#autoSkipBreakInput').checked;
   
   store.set('focusDur', focusDur);
   store.set('breakDur', breakDur);
   store.set('dailyGoal', dailyGoal);
+  store.set('autoSkipBreak', autoSkipBreak);
   
   $('#timerModal').classList.remove('open');
+  
+  // Instantly apply the newly saved duration to the current timer
+  if (timerState.mode === 'focus') {
+    timerState.totalSeconds = focusDur * 60;
+  } else {
+    timerState.totalSeconds = breakDur * 60;
+  }
+  
   resetTimer();
   updateTargetProgress();
 });
@@ -570,7 +591,9 @@ function startTimer() {
       if (timerState.mode === 'focus') {
         timerState.completedSessions++;
         store.set('sess', timerState.completedSessions);
-        $('#sess').textContent = `Focus sessions done: ${timerState.completedSessions}`;
+        
+        const currentLabel = $('#sessionLabel').value.trim() || 'Session';
+        $('#sess').textContent = `Focus sessions done: ${timerState.completedSessions} (Last: ${currentLabel})`;
         
         todayMinutes += focusDur;
         store.set('todayMins', todayMinutes);
@@ -586,7 +609,12 @@ function startTimer() {
         
         updatePoints(10);
         updateTargetProgress();
-        switchMode('break');
+        
+        if (autoSkipBreak) {
+          switchMode('focus');
+        } else {
+          switchMode('break');
+        }
       } else {
         switchMode('focus');
       }
